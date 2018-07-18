@@ -1,7 +1,6 @@
 #include "audio.h"
 #include <iostream>
 
-
 AudioInput::AudioInput(AudioParameter *params)
 {
     // Init parameters
@@ -15,20 +14,33 @@ AudioInput::AudioInput(AudioParameter *params)
 
 }
 
-void AudioInput::TestRun()
+AudioInput::~AudioInput(){
+    for (BlockingQueue<int16_t*> * queue : audioQueues)
+        {
+            queue->flush();
+        }
+}
+
+void AudioInput::run()
 {
     int ret;
     int error;
-    int16_t buffer[chunk_size];
+    int16_t *buffer;
+    while (true) {
+        buffer = new int16_t[chunk_size];
+        ret = pa_simple_read(s,buffer,chunk_size,&error);
 
-    for (int i=0;i<10;i++) {
-        ret = pa_simple_read(s,buffer ,chunk_size,&error);
-        if (ret != 0)
+        for (BlockingQueue<int16_t*> * queue : audioQueues)
         {
-            std::cout<<pa_strerror(error) << std::endl;
-        } else {
-            std::cout << buffer[0] << std::endl;
+            queue->push(buffer);
         }
-        
     }
 }
+
+BlockingQueue<int16_t*>* AudioInput::subscribe()
+{
+   BlockingQueue<int16_t*> *new_queue = new BlockingQueue<int16_t*>(MAX_QUEUE_SIZE);
+   audioQueues.push_back(new_queue);
+   return new_queue;
+}
+
