@@ -24,7 +24,6 @@ template <typename T> class BlockingQueue{
         condition.notify_all();
     }
 
-
     /**
      * @brief Try to retrieve the first value of the queue. If there is no available values
      * block the consumer until a new value is available.

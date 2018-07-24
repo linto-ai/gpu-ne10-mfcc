@@ -7,15 +7,14 @@ AudioInput::AudioInput(AudioParameter *params)
     ss.format = PA_SAMPLE_S16LE;
     ss.channels = params->channels;
     ss.rate = params->sampleRate;
-    chunk_size = params->chunkSize;
+    chunk_size = params->chunkSize * 2;
 
     // Open connexion
     s = pa_simple_new(NULL,"Audio", PA_STREAM_RECORD, NULL, "ASR", &ss, NULL, NULL, NULL);
 
 }
-
 AudioInput::~AudioInput(){
-    for (BlockingQueue<int16_t*> * queue : audioQueues)
+    for (BlockingQueue<int16_t*> * queue : outPutQueues)
         {
             queue->flush();
         }
@@ -30,7 +29,7 @@ void AudioInput::run()
         buffer = new int16_t[chunk_size];
         ret = pa_simple_read(s,buffer,chunk_size,&error);
 
-        for (BlockingQueue<int16_t*> * queue : audioQueues)
+        for (BlockingQueue<int16_t*> * queue : outPutQueues)
         {
             queue->push(buffer);
         }
@@ -40,7 +39,7 @@ void AudioInput::run()
 BlockingQueue<int16_t*>* AudioInput::subscribe()
 {
    BlockingQueue<int16_t*> *new_queue = new BlockingQueue<int16_t*>(MAX_QUEUE_SIZE);
-   audioQueues.push_back(new_queue);
+   outPutQueues.push_back(new_queue);
    return new_queue;
 }
 

@@ -5,14 +5,20 @@ LIBS= -L/usr/local/lib/
 
 all: $(EXEC_NAME) clean
 
-$(EXEC_NAME) : audio.o main.o 
-	$(CC) -o $(EXEC_NAME) audio.o  main.o $(CCFLAGS) $(LIBS)
+$(EXEC_NAME) : audio.o vadfeatprocessor.o vadengine.o main.o 
+	$(CC) -o $(EXEC_NAME) audio.o vadfeatprocessor.o vadengine.o main.o $(CCFLAGS) $(LIBS)
 
 main.o : main.cpp blockingqueue.h  audio.h
-	$(CC) -c -o main.o main.cpp $(CCFLAGS)
+	$(CC) $(CCFLAGS) -c -o main.o main.cpp 
 
 audio.o : audio.h audio.cpp
-	$(CC) -c audio.cpp $(CCFLAGS)
+	$(CC) $(CCFLAGS) -c audio.cpp
+
+vadfeatprocessor.o : vadfeatprocessor.h blockingqueue.h vadfeatprocessor.cpp
+	$(CC) $(CCFLAGS) -c vadfeatprocessor.cpp 
+
+vadengine.o : vadengine.h blockingqueue.h vadengine.cpp
+	$(CC) $(CCFLAGS) -c vadengine.cpp
 
 clean :
 	rm -rf *.o
