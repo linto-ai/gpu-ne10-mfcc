@@ -2,14 +2,13 @@
 
 VADFeatProcessor::VADFeatProcessor()
 {
-    // Setting cut frequencies index
+    // Setting cut frequencies indexes
     float i = 0.0;
     float step = (params.samplingRate / 2.0) / (params.window_width / 2.0);
-    for (i;i * step < params.fbar_lfreq; i++) {}
+    while (i * step < params.fbar_lfreq) i++;
     fbar_lfreq_index = (i-1);
-    for (i;i *step < params.fbar_hfreq; i++) {}
+    while (i *step < params.fbar_hfreq) i++;
     fbar_hfreq_index = i;
-
     isActive = true;
 }
 

@@ -27,8 +27,8 @@ int main(int argc, char* argv[])
     std::thread audio_thread(&AudioInput::run, input);
     std::thread vad_thread(&VADEngine::run, vadEngine);
     
-    UtteranceStatus res = vadEngine->detectUtterance();
-
+    vadEngine->detectUtterance();
+    
     std::cin.ignore();
 
     audio_thread.join();

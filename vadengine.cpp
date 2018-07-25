@@ -88,13 +88,21 @@ UtteranceStatus VADEngine::detectUtterance()
     cond.wait(lock);
     detecting = false;
     timeout_thread.join();
-    if (status == thresholdReached) 
+    std::cout << "Status is ";
+    switch(status)
     {
-        std::cout << "Threshold reached" << std::endl;
-    } else {
-        std::cout << "Timeout" << std::endl;
+        case thresholdReached: std::cout << "thresholdReached" << std::endl; break;
+        case timeoutreached: std::cout << "timeout" << std::endl; break; 
+        case canceled: std::cout << "canceled" << std::endl; break;
     }
     return status;
+}
+
+void VADEngine::cancelUtteranceDetection()
+{
+    speechDetected = true; // For the timeout_guard not to change the status to timeoutreached 
+    status = canceled;
+    cond.notify_one();
 }
 
 void VADEngine::timeout_guard()
@@ -103,7 +111,6 @@ void VADEngine::timeout_guard()
     std::this_thread::sleep_for(std::chrono::seconds(params.timeout));
     if (!speechDetected)
     {
-        std::cout << "Timeout !" << std::endl;
         status = timeoutreached;
         cond.notify_one();
     }

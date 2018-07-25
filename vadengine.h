@@ -22,16 +22,41 @@ struct VADParams{
 
 enum UtteranceStatus {
     thresholdReached,
-    timeoutreached
+    timeoutreached,
+    canceled
 };
 
 class VADEngine{
     public:
     VADEngine();
     ~VADEngine();
+
+    /**
+     * @brief Set the Input object
+     * 
+     * @param queue The expected input is a valarray with energy as the first value and fbar as the second value.
+     */
+
     void setInput(BlockingQueue<std::valarray<float>>* queue);
+    /**
+     * @brief Run the vadengin thread, update speech energy threshold continiously.
+     * 
+     */
     void run();
+
+    /**
+     * @brief Start utterance detection.
+     * 
+     * @return UtteranceStatus.timeout if no speech has been detected during the timeout delay or UtteranceStatus.thresholdReached if speech has been detected.
+     */
     UtteranceStatus detectUtterance();
+
+    void cancelUtteranceDetection();
+
+    /**
+     * @brief Set a timer thread that stop the detectUtterance after a specified delay if no speech is detected.
+     * 
+     */
     void timeout_guard();
 
     private:

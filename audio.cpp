@@ -22,13 +22,11 @@ AudioInput::~AudioInput(){
 
 void AudioInput::run()
 {
-    int ret;
     int error;
     int16_t *buffer;
     while (true) {
         buffer = new int16_t[chunk_size];
-        ret = pa_simple_read(s,buffer,chunk_size,&error);
-
+        pa_simple_read(s,buffer,chunk_size,&error);
         for (BlockingQueue<int16_t*> * queue : outPutQueues)
         {
             queue->push(buffer);
