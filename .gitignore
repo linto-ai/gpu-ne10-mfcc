@@ -1,3 +1,4 @@
-.vscode/
+.vscode
 mqtt-spy*
 *.o
+audio_test
