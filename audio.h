@@ -10,7 +10,6 @@ using namespace std;
 const int MAX_QUEUE_SIZE = 10;
 
 
-
 struct AudioParameter 
 {
     uint16_t sampleRate;

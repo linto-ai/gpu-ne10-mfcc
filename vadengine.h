@@ -4,6 +4,10 @@
 #include <deque>
 #include <valarray>
 #include <iostream>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
+#include <chrono>
 
 #include "blockingqueue.h"
 
@@ -11,13 +15,14 @@ const uint QUEUE_SIZE = 30;
 
 struct VADParams{
     float_t fbar_th = 0.5;
-    u_int16_t speech_threshold = 3;
-    u_int16_t silence_threshold = 8;
+    uint speech_fram_tr = 3; // Number of speech frame required to recognize an utterance
+    uint silence_fram_th = 8; // Number of silence frame required to determine utterance end
+    uint timeout = 5; // Delay to stop utterance detection if no speech is detected
 };
 
 enum UtteranceStatus {
     thresholdReached,
-    timeout
+    timeoutreached
 };
 
 class VADEngine{
@@ -25,17 +30,31 @@ class VADEngine{
     VADEngine();
     ~VADEngine();
     void setInput(BlockingQueue<std::valarray<float>>* queue);
-    void setCallBackFunction();
     void run();
     UtteranceStatus detectUtterance();
+    void timeout_guard();
 
     private:
-    float energy_th, fbar_th;
     VADParams params;
+    BlockingQueue<std::valarray<float>>* inputQueue = NULL;
+
+    //Utterance detection
     bool detecting = false;
+    UtteranceStatus status;
+    uint speech_frames, silence_frames;
+    bool speechDetected;
+
+    //Timeout guard
+    std::mutex mutx;
+    std::condition_variable cond;
+
+    // Energy threshold update
     std::deque<float>* speechEnergy;
     std::deque<float>* nSpeechEnergy;
-    BlockingQueue<std::valarray<float>>* inputQueue = NULL;
+    
+
+    float energy_th, fbar_th;
+    
 
 };
 

@@ -27,11 +27,12 @@ int main(int argc, char* argv[])
     std::thread audio_thread(&AudioInput::run, input);
     std::thread vad_thread(&VADEngine::run, vadEngine);
     
+    UtteranceStatus res = vadEngine->detectUtterance();
 
     std::cin.ignore();
 
     audio_thread.join();
-    //vadfeat_thread.join();
+    vadfeat_thread.join();
 
     return 0;
 }

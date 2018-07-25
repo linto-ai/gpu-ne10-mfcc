@@ -40,6 +40,8 @@
         "tuple": "cpp",
         "typeinfo": "cpp",
         "complex": "cpp",
-        "valarray": "cpp"
+        "valarray": "cpp",
+        "cinttypes": "cpp",
+        "algorithm": "cpp"
     }
 }
