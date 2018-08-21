@@ -19,9 +19,6 @@
 #include <string>
 using namespace std;
 
-enum event {Wakeword, VAD_end, Meeting ,Stop_meeting, Pause_meeting ,None};
-
-
 class Circular_Buffer {
     public:
     Circular_Buffer(uint32_t size);
@@ -36,7 +33,6 @@ class Circular_Buffer {
     int16_t* buffer;
     uint32_t circular_size;
     uint32_t index;
-    enum event event;
 };
 
 

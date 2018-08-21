@@ -24,20 +24,27 @@
 #include "circular.h" 
 using namespace std;
 
+enum event {Recording, Meeting, None};
+
 class Record_Manager {
     public:
-    Record_Manager(string name, int queue_max_size,bool pipe_mode,int32_t buffer_size);
+    Record_Manager(string name,bool pipe_mode,int32_t buffer_size,int32_t chunkSize);
     bool writeData(int16_t* data, int elements);
     bool sendBinaryFlow(int16_t* data,int size);
+    //void setInput(BlockingQueue<int16_t*>* queue);
     bool sendMFCCFeatures(void* MFCCFeatures,int size,ofstream f);
-    bool run();
+    bool test();
+    void run();
+    void setEvent(enum event new_event);
     ~Record_Manager();
     
     private:
     string name;
     ofstream stream;
     Circular_Buffer *buffer;
-    //BlockingQueue<int16_t> *queue;
+    //BlockingQueue<int16_t*> *queue;
+    int32_t chunkSize;
+    enum event event;
 };
 
 #endif

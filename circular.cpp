@@ -19,7 +19,6 @@
 Circular_Buffer::Circular_Buffer(uint32_t size) {
     circular_size = size;
     index = 0;
-    event = None;
     buffer = (int16_t*)malloc(sizeof(int16_t)*size);
 }
 

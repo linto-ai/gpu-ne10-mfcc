@@ -18,16 +18,16 @@
 #include "recordmanager.h"
 using namespace std;
 
-Record_Manager::Record_Manager(string name,int queue_max_size,bool pipe_mode,int32_t buffer_size) {
+Record_Manager::Record_Manager(string name,bool pipe_mode,int32_t buffer_size,int32_t chunkSize) {
     if (pipe_mode) {
         mkfifo(name.c_str(), S_IWUSR | S_IRUSR | S_IRGRP | S_IROTH);
     }
     this->name = name;
+    this->chunkSize = chunkSize;
     stream.open (name, ios::out | ios::binary);
     this->buffer = new Circular_Buffer(buffer_size);
-    //BlockingQueue<int16_t> queue(queue_max_size);
-    //this->queue = &queue;
 }
+
 
 bool Record_Manager::writeData(int16_t* data, int elements) {
     if (stream.is_open())
@@ -44,11 +44,16 @@ bool Record_Manager::writeData(int16_t* data, int elements) {
     }
 }
 
+/*void Record_Manager::setInput(BlockingQueue<int16_t*>* queue){
+    input_queue = queue;
+}*/
+
+
 bool Record_Manager::sendMFCCFeatures(void* MFCCFeatures,int size,ofstream f) {
     return true;
 }
 
-bool  Record_Manager::run() {
+bool  Record_Manager::test() {
     int16_t* data = NULL;
     data = (int16_t*)malloc(sizeof(int16_t)*1000);
     random_device rd;  //Will be used to obtain a seed for the random number engine
@@ -62,6 +67,20 @@ bool  Record_Manager::run() {
         cout << buffer->getIndex() << endl;
     }
     return Record_Manager::writeData(buffer->getBuffer(),buffer->getSize());
+}
+
+void Record_Manager::setEvent(enum event new_event) {
+    this->event = new_event;
+}
+
+
+void Record_Manager::run() {
+    while(true) {
+        if (event == Recording){
+            //int16_t* input = queue->pop();
+            //writeData(input,chunkSize);
+        }
+    }
 }
 
 Record_Manager::~Record_Manager() {
