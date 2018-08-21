@@ -14,18 +14,31 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#ifndef CIRCULAR_H
 #include <iostream>
-#include <thread>
-
-#include "recordmanager.h"
+#include <string>
 using namespace std;
 
-int main(int argc, char* argv[])
-{
-    Record_Manager manager("test.txt",16,true,1562);
-    if(manager.run()==false) {
-        cout << "Test run failed..." << endl;
-    }
-    cout << "End" << endl;
-    return 0;
-}
+enum event {Wakeword, VAD_end, Meeting ,Stop_meeting, Pause_meeting ,None};
+
+
+class Circular_Buffer {
+    public:
+    Circular_Buffer(uint32_t size);
+    uint32_t getIndex();
+    void setIndex(uint32_t new_index);
+    bool add(int16_t* data,uint32_t size);
+    int16_t* getBuffer();
+    uint32_t getSize();
+    ~Circular_Buffer();
+    
+    private:
+    int16_t* buffer;
+    uint32_t circular_size;
+    uint32_t index;
+    enum event event;
+};
+
+
+
+#endif

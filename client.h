@@ -14,18 +14,34 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#ifndef RECORDER_H
 #include <iostream>
-#include <thread>
-
-#include "recordmanager.h"
+#include <string>
+#include <fstream>
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <stdlib.h>
+#include <netinet/in.h>
+#include <string.h>
+#include <arpa/inet.h>
 using namespace std;
 
-int main(int argc, char* argv[])
-{
-    Record_Manager manager("test.txt",16,true,1562);
-    if(manager.run()==false) {
-        cout << "Test run failed..." << endl;
-    }
-    cout << "End" << endl;
-    return 0;
-}
+class Client {
+    public:
+    Client(int port,string address,int queue_max_size);
+    int getPort();
+    string getAddress();
+    void sendData(void* buffer,int size);
+    ~Client();
+    
+    private:
+    void _on_broker_message();
+    void _on_broker_connect();
+    int port;
+    string address;
+    int sock; // TCP socket
+    //BlockingQueue<int16_t> *queue;
+};
+
+#endif
