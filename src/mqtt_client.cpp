@@ -56,7 +56,7 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *m
   memcpy(value,(message->payload),message->payloadlen);
   cout << message->payloadlen << endl;
 
-  cout << "Topic : " << topicName << " Message : " << value << endl; 
+  cout << "Topic : " << topicName << " Message : " << value << endl;
   MQTTClient_freeMessage(&message);
   MQTTClient_free(topicName);
   return 1;

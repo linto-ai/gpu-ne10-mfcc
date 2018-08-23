@@ -82,16 +82,16 @@ bool Record_Manager::sendMFCCFeatures(void* MFCCFeatures,int size,ofstream f) {
 
 bool  Record_Manager::test() {
     int16_t* data = NULL;
-    data = (int16_t*)malloc(sizeof(int16_t)*1000);
+    data = (int16_t*)malloc(sizeof(int16_t)*1024);
     random_device rd;  //Will be used to obtain a seed for the random number engine
     mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
     uniform_int_distribution<> dis(-32767,32767);
     for (int k=0; k < 10 ; k++) {
-        for (int n=0; n<10000;n++) {
+        for (int n=0; n<1024;n++) {
             data[n]=dis(gen);
         }
-        buffer->add(data,1000);
-        //cout << buffer->getIndex() << endl;
+        buffer->add(data,1024);
+        cout << buffer->getIndex() << endl;
     }
     bool ret = Record_Manager::writeData(buffer->getBuffer(),buffer->getSize(),Recording);
     return ret;
