@@ -21,18 +21,21 @@
 #include <random>
 #include <sys/types.h>  
 #include <sys/stat.h> 
+#include <chrono>
 #include "circular.h" 
 using namespace std;
+using namespace std::chrono;
 
 enum event {Recording, Meeting, None};
 
 class Record_Manager {
     public:
-    Record_Manager(string name,bool pipe_mode,int32_t buffer_size,int32_t chunkSize);
-    bool writeData(int16_t* data, int elements);
+    Record_Manager(string filename,bool pipe_mode,string meeting_file_name,int32_t buffer_size,int32_t chunkSize);
+    bool writeData(int16_t* data, int elements,enum event e);
     bool sendBinaryFlow(int16_t* data,int size);
     //void setInput(BlockingQueue<int16_t*>* queue);
     bool sendMFCCFeatures(void* MFCCFeatures,int size,ofstream f);
+    void OpenMeetingFile();
     bool test();
     void run();
     void setEvent(enum event new_event);
@@ -41,6 +44,8 @@ class Record_Manager {
     private:
     string name;
     ofstream stream;
+    string meeting_file_name;
+    ofstream meeting_stream;
     Circular_Buffer *buffer;
     //BlockingQueue<int16_t*> *queue;
     int32_t chunkSize;

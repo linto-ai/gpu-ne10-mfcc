@@ -30,18 +30,20 @@ int main(int argc, char* argv[])
     AudioInput* input = new AudioInput(&audioParams);
     VADFeatProcessor* vadFeatProcessor = new VADFeatProcessor();
     VADEngine* vadEngine = new VADEngine();*/
-    Record_Manager *manager = new Record_Manager("test.txt",false,4000,1024);
-
+    Record_Manager *manager = new Record_Manager("test.raw",false,"meeting",4000,1024);
+    
     // Link modules
     /*vadFeatProcessor->set_input(input->subscribe());
     vadEngine->setInput(vadFeatProcessor->subscribe());
-    manager->setInput(input->subscribe());*/
+    manager->setInput(input->subscribe());
+    meeting_manager->setInput(input->subscribe());*/
 
     // Run modules in threads
     /*std::thread vadfeat_thread(&VADFeatProcessor::run, vadFeatProcessor);
     std::thread audio_thread(&AudioInput::run, input);
     std::thread vad_thread(&VADEngine::run, vadEngine);
-    std::thread manager_thread(&Record_Manager::run, manager);*/
+    std::thread manager_thread(&Record_Manager::run, manager);
+    std::thread meeting_thread(&Record_Manager::run_meeting, meeting_manager) */
     
 
     /*vadEngine->detectUtterance();

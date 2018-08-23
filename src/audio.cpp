@@ -11,8 +11,8 @@ AudioInput::AudioInput(AudioParameter *params)
 
     // Open connexion
     s = pa_simple_new(NULL,"Audio", PA_STREAM_RECORD, NULL, "ASR", &ss, NULL, NULL, NULL);
-
 }
+
 AudioInput::~AudioInput(){
     for (BlockingQueue<int16_t*> * queue : outPutQueues)
         {

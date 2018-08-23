@@ -24,7 +24,7 @@ Circular_Buffer::Circular_Buffer(uint32_t size) {
 
 
 bool Circular_Buffer::add(int16_t* data, uint32_t size) {
-  if (circular_size > size) { // Useless case if bufsize > max_buf_size
+  if (circular_size >= size && size != 0) { // Useless case if bufsize > max_buf_size
    if (size + index >= circular_size) { //If there is not enough places at the end of the buffer
      unsigned int free_place = circular_size - index; //compute the free place in the buffer
      memcpy(buffer+index,data,free_place*sizeof(int16_t)); //copy data at the end of the buffer

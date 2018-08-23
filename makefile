@@ -20,6 +20,9 @@ client.o : include/client.h src/client.cpp
 circular.o : include/circular.h src/circular.cpp
 	$(CC) $(CCFLAGS) -c src/circular.cpp
 
+mqtt_client.o : include/mqtt_client.h src/mqtt_client.cpp
+	$(CC) $(CCFLAGS) -c src/mqtt_client.cpp
+
 clean :
 	rm -rf *.o
 
