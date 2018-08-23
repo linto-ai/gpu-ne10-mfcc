@@ -16,8 +16,10 @@
  */
 #include <iostream>
 #include <thread>
+#include <unistd.h>
 
 #include "recordmanager.h"
+#include "mqtt_client.h"
 //#include "audio.h"
 using namespace std;
 
@@ -31,7 +33,9 @@ int main(int argc, char* argv[])
     VADFeatProcessor* vadFeatProcessor = new VADFeatProcessor();
     VADEngine* vadEngine = new VADEngine();*/
     Record_Manager *manager = new Record_Manager("test.raw",false,"meeting",4000,1024);
+    string topics[3] = {"topic/test","topic/test2","topic/test3"};
     
+    MQTT_Client *mqtt = new MQTT_Client("localhost",1883,1,topics,3);
     // Link modules
     /*vadFeatProcessor->set_input(input->subscribe());
     vadEngine->setInput(vadFeatProcessor->subscribe());
@@ -54,6 +58,9 @@ int main(int argc, char* argv[])
 
     if(manager->test()==false) {
         cout << "Test run failed..." << endl;
+    }
+    while (true) {
+        sleep(2);
     }
     return 0;
 }

@@ -26,13 +26,12 @@ void connlost(void *context, char *cause);
 
 class MQTT_Client {
     public:
-    MQTT_Client(string ip,int16_t port,int QOS,string* topics);
+    MQTT_Client(string ip,int16_t port,int QOS,string topics[], int elements);
     ~MQTT_Client();
-    int run();
 
     private:
     string* topic_subscribed;
-    MQTTClient* mqtt_client;
+    MQTTClient mqtt_client;
     string ip;
     int16_t port;
 

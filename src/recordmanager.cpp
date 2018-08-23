@@ -61,6 +61,7 @@ bool Record_Manager::writeData(int16_t* data, int elements, enum event e) {
             return false;
         }
     }
+    return false;
 }
 
 void Record_Manager::OpenMeetingFile() {
@@ -90,7 +91,7 @@ bool  Record_Manager::test() {
             data[n]=dis(gen);
         }
         buffer->add(data,1000);
-        cout << buffer->getIndex() << endl;
+        //cout << buffer->getIndex() << endl;
     }
     bool ret = Record_Manager::writeData(buffer->getBuffer(),buffer->getSize(),Recording);
     return ret;

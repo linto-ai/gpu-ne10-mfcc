@@ -16,28 +16,35 @@
  */
 #include "mqtt_client.h"
 
-MQTT_Client::MQTT_Client(string ip,int16_t port,int QOS,string* topics) {
+MQTT_Client::MQTT_Client(string ip,int16_t port,int QOS,string topics[], int elements) {
   this->ip = ip;
   this->port = port;
   string addr = "tcp://" + ip + ":" + to_string(port);
+  cout << addr.c_str() << endl;
   MQTTClient_connectOptions conn_opts = MQTTClient_connectOptions_initializer;
-  MQTTClient_create(mqtt_client, addr.c_str(), "ASR",MQTTCLIENT_PERSISTENCE_NONE, NULL);
+  if (MQTTClient_create(&mqtt_client, addr.c_str(), "ASR" ,MQTTCLIENT_PERSISTENCE_NONE, NULL) != MQTTCLIENT_SUCCESS) {
+    cout << "MQTT_Client creation failed" << endl;
+  }
   conn_opts.keepAliveInterval = 20;
   conn_opts.cleansession = 1;
-  MQTTClient_setCallbacks(*mqtt_client, NULL, connlost, msgarrvd, delivered);
-  for (int i = 0; i < (sizeof(topics)/sizeof(*topics)); i++) {
-    MQTTClient_subscribe(*mqtt_client,(topics[i]).c_str(), QOS);
+  if (MQTTClient_setCallbacks(mqtt_client, NULL, connlost, msgarrvd, delivered) != MQTTCLIENT_SUCCESS) {
+    cout << "MQTT_Client creation failed" << endl;
   }
-  MQTTClient_connect(*mqtt_client, &conn_opts);
-}
-
-int MQTT_Client::run() {
-
+  if (MQTTClient_connect(mqtt_client, &conn_opts) != MQTTCLIENT_SUCCESS) {
+    cout << "MQTT connection failed" << endl;
+  }
+  for (int i = 0; i < elements; i++) {
+    if (MQTTClient_subscribe(mqtt_client,(topics[i]).c_str(), QOS)!= MQTTCLIENT_SUCCESS) {
+      cout << "Sub to " << (topics[i]).c_str() << " failed" << endl;
+    }
+  }
+  
 }
 
 
 MQTT_Client::~MQTT_Client() {
-
+  MQTTClient_disconnect(mqtt_client, 100);
+  MQTTClient_destroy(&mqtt_client);
 }
 
 void delivered(void *context, MQTTClient_deliveryToken dt) {
@@ -45,22 +52,17 @@ void delivered(void *context, MQTTClient_deliveryToken dt) {
 }
 
 int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *message) {
-  void *vp = static_cast<void*>(message->payload);
-  string *sp = static_cast<std::string*>(vp);
-  string value = *sp;
-  delete sp;
-  if (strcmp(topicName,"")==0 && value == "") {
-    (void)0; 
-  }
-  else if (strcmp(topicName,"")==0 && value == "") {
-    (void)0;
-  }
+  char* value=(char*)malloc(sizeof(message->payloadlen+1));
+  memcpy(value,(message->payload),message->payloadlen);
+  cout << message->payloadlen << endl;
+
+  cout << "Topic : " << topicName << " Message : " << value << endl; 
   MQTTClient_freeMessage(&message);
   MQTTClient_free(topicName);
   return 1;
 }
+
 void connlost(void *context, char *cause) {
   cout << "Connection lost" << endl;
-  cout << "  context: " << context <<  "cause: " << cause << endl;
+  cout << "Context: " << context <<  " cause: " << cause << endl;
 }
-

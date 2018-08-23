@@ -1,12 +1,12 @@
 CC = g++
-CCFLAGS= -Wall -pthread -Iinclude
+CCFLAGS= -Wall -pthread -Iinclude -lpaho-mqtt3cs
 EXEC_NAME= audio_test
-LIBS= -L/usr/local/lib/
+LIBS= -L/usr/local/lib/ 
 
 all: $(EXEC_NAME) clean
 
-$(EXEC_NAME) : main.o circular.o recordmanager.o client.o 
-	$(CC) -o $(EXEC_NAME) recordmanager.o client.o circular.o main.o $(CCFLAGS) $(LIBS)
+$(EXEC_NAME) : main.o circular.o recordmanager.o client.o  mqtt_client.o
+	$(CC) -o $(EXEC_NAME) recordmanager.o client.o circular.o mqtt_client.o main.o $(CCFLAGS) $(LIBS)
 
 main.o : src/main.cpp
 	$(CC) $(CCFLAGS) -c -o main.o src/main.cpp 
