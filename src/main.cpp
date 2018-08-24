@@ -33,7 +33,7 @@ int main(int argc, char* argv[])
     VADFeatProcessor* vadFeatProcessor = new VADFeatProcessor();
     VADEngine* vadEngine = new VADEngine();*/
     Record_Manager *manager = new Record_Manager("test.raw",false,"meeting",4000,1024);
-    string topics[3] = {"topic/test","topic/test2","topic/test3"};
+    string topics[3] = {"wuw/wuw-spotted","utterance/start","utterance/stop"};
     
     MQTT_Client *mqtt = new MQTT_Client("localhost",1883,1,topics,3);
     // Link modules

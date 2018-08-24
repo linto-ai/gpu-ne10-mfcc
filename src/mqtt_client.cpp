@@ -52,13 +52,35 @@ void delivered(void *context, MQTTClient_deliveryToken dt) {
 }
 
 int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *message) {
-  char* value=(char*)malloc(sizeof(message->payloadlen+1));
-  memcpy(value,(message->payload),message->payloadlen);
-  cout << message->payloadlen << endl;
-
+  char* value=(char*)malloc(sizeof(char)*message->payloadlen);
+  strncpy(value,(char*)(message->payload),message->payloadlen);
+  value[message->payloadlen]='\0';
   cout << "Topic : " << topicName << " Message : " << value << endl;
+  Document d;
+  d.Parse(value);
+  cout <<  GetParseError_En(d.GetParseError()) << endl;
+  if (strcmp(topicName,"wuw/wuw-spotted") == 0) {
+    cout << "WUW detected !" << endl;
+  }
+  else if (strcmp(topicName,"utterance/stop") == 0) {
+    Value& s = d["reason"];
+    if (strcmp(s.GetString(),"timeout")==0) {
+      cout << "VAD timeout !" << endl;
+    }
+    else if (strcmp(s.GetString(),"thresholdReached")==0) {
+      cout << "VAD threshold reached !" << endl;
+    }
+    else if (strcmp(s.GetString(),"canceled")==0) {
+      cout << "VAD canceled by user !" << endl;
+    }
+  }
+  else if (strcmp(topicName,"utterance/start") == 0) {
+    cout << "VAD detection should start !" << endl;
+  }
+
   MQTTClient_freeMessage(&message);
   MQTTClient_free(topicName);
+  free(value);
   return 1;
 }
 
