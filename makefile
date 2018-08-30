@@ -1,8 +1,8 @@
 CC = g++
-CCFLAGS= -Wall -pthread -Iinclude -lpaho-mqtt3cs
+CCFLAGS= -Wall -pthread -lpaho-mqtt3cs -lpulse-simple -lpulse -lNE10
 EXEC_NAME= audio_test
 LIBS= -L/usr/local/lib/ 
-OBJ = main.o circular.o recordmanager.o client.o  mqtt_client.o features.o
+OBJ = main.o circular.o recordmanager.o client.o  mqtt_client.o features.o audio.o
 
 all: $(EXEC_NAME) clean
 
@@ -12,20 +12,23 @@ $(EXEC_NAME) : $(OBJ)
 main.o : src/main.cpp
 	$(CC) $(CCFLAGS) -c -o main.o src/main.cpp 
 
-recordmanager.o : include/recordmanager.h src/recordmanager.cpp
-	$(CC) $(CCFLAGS) -c src/recordmanager.cpp 
+circular.o : src/circular.cpp include/circular.h
+	$(CC) $(CCFLAGS) -c -o circular.o src/circular.cpp 
 
-client.o : include/client.h src/client.cpp
-	$(CC) $(CCFLAGS) -c src/client.cpp
+recordmanager.o : src/recordmanager.cpp include/recordmanager.h
+	$(CC) $(CCFLAGS) -c -o recordmanager.o src/recordmanager.cpp 
 
-circular.o : include/circular.h src/circular.cpp
-	$(CC) $(CCFLAGS) -c src/circular.cpp
+client.o : src/client.cpp include/client.h
+	$(CC) $(CCFLAGS) -c -o client.o src/client.cpp 
 
-mqtt_client.o : include/mqtt_client.h src/mqtt_client.cpp
-	$(CC) $(CCFLAGS) -c src/mqtt_client.cpp
+mqtt_client.o : src/mqtt_client.cpp include/mqtt_client.h
+	$(CC) $(CCFLAGS) -c -o mqtt_client.o src/mqtt_client.cpp 
 
-features.o : include/features/h src/features.cpp
-	$(CC) $(CCFLAGS) -c src/features.cpp
+features.o : src/features.cpp include/features.h
+	$(CC) $(CCFLAGS) -c -o features.o src/features.cpp 
+
+audio.o : src/audio.cpp include/audio.h
+	$(CC) $(CCFLAGS) -c -o audio.o src/audio.cpp 
 
 clean :
 	rm -rf *.o

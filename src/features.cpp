@@ -1,4 +1,5 @@
-#include "features.h"
+#include "../include/features.h"
+using namespace std;
 
 float computeEnergy(int16_t* window, VADFeatsParams params)
 {
@@ -13,9 +14,42 @@ float computeEnergy(int16_t* window, VADFeatsParams params)
 float computeFBAR(int16_t* window, uint fbar_lfreq_index, uint fbar_hfreq_index, VADFeatsParams params)
 {
     DArray spectrum = computeSpectrum(window, params.window_width);
-
     DArray band = spectrum[std::slice(fbar_lfreq_index, fbar_hfreq_index - fbar_lfreq_index, 1)];
     return band.sum() / spectrum.sum();
+}
+
+int16_t* preEmphasis(int16_t* window, VADFeatsParams params) {
+	int16_t* new_window = (int16_t*)malloc(sizeof(int16_t)*params.window_width);
+	new_window[0]=window[0];
+	for (int i = 1; i < params.window_width; i++)
+	{
+		new_window[i] = window[i] + window[i-1]*params.preEmphasisFactor;
+	}
+	return new_window;
+}
+
+
+int16_t* observation(int16_t* window,int window_length,int overlap, int number) {
+	return (window+(window_length-overlap)*number);
+}
+
+void ne10_test(int16_t* window) {
+	ne10_int32_t fftSize = 1024;
+    ne10_fft_r2c_cfg_int16_t cfg = ne10_fft_alloc_r2c_int16(fftSize);      // Allocate a configuration structure for R2C/C2R FP32 NEON FFTs of size fftSize
+    ne10_int16_t *in          = (ne10_int16_t*)malloc(fftSize * sizeof(ne10_int16_t));         // Allocate an input array of samples
+    ne10_fft_cpx_int16_t *out = (ne10_fft_cpx_int16_t*)malloc(fftSize * sizeof(ne10_fft_cpx_int16_t)); // Allocate an (oversized) output array of samples
+	// FFT
+	for (int k=0;k<1024;k++) {
+		in[k] = window[k];
+	}
+    ne10_fft_r2c_1d_int16_neon(out, in, cfg, 0); // Call the FP32 R2C NEON implementation directly
+    cout << "FFT done" << endl;
+    // IFFT
+    ne10_fft_c2r_1d_int16_neon(in, out, cfg, 0); // Call the FP32 C2R NEON implementation directly (reusing the configuration structure!)
+	cout << "IFFT done" << endl;
+    NE10_FREE(out);                    // Free the allocated input array
+    NE10_FREE(in);                     // Free the allocated output array
+    ne10_fft_destroy_r2c_int16(cfg); // Free the allocated configuration structure
 }
 
 DArray computeSpectrum(CArray x)
@@ -67,6 +101,11 @@ DArray computeSpectrum(CArray x)
         ret[i] = std::sqrt(std::pow((double)x[i].real(),2) + std::pow((double)x[i].imag(), 2));
     }
     return ret;
+}
+
+DArray computeNEONFFT()
+{
+	return DArray(10);
 }
 
 DArray computeSpectrum(int16_t* window, uint window_width) 
@@ -142,11 +181,5 @@ FArray hanning(FArray &window)
 	}
 	hanning *= window;
 	return hanning;
-
-}
-
-FArray power_spectrum(FArray &window, uint fft_length)
-{
-	FArray spectrum = 
 
 }

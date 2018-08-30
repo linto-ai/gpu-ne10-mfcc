@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "mqtt_client.h"
+#include "../include/mqtt_client.h"
 
 MQTT_Client::MQTT_Client(string ip,int16_t port,int QOS,string topics[], int elements) {
   this->ip = ip;

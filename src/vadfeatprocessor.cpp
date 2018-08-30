@@ -1,4 +1,4 @@
-#include "vadfeatprocessor.h"
+#include "../include/vadfeatprocessor.h"
 
 VADFeatProcessor::VADFeatProcessor()
 {

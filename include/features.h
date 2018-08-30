@@ -1,9 +1,11 @@
 #ifndef FEATURES_H
 #define FEATURES_H
+#include <iostream>
 #include <cmath>
 #include <complex>
 #include <valarray>
 #include <assert.h>
+#include "NE10.h"
 
 const double PI = 3.14159265358979323846264338328L;
 typedef std::complex<double> Complex;
@@ -17,12 +19,16 @@ struct VADFeatsParams{
     u_int16_t overlap = 0;
     u_int16_t fbar_lfreq = 80;
     u_int16_t fbar_hfreq = 1000;
+    float preEmphasisFactor = 0.97;
 };
 
 float computeEnergy(int16_t* window, VADFeatsParams params);
 float computeFBAR(int16_t* window, uint fbar_lfreq_index, uint fbar_hfreq_index, VADFeatsParams params);
 DArray computeSpectrum(int16_t* window, uint window_length);
-CArray arrayToCArray(int16_t* window, VADFeatsParams params);
+CArray arrayToCArray(int16_t* window, uint window_width);
+FArray hanning(FArray &window);
+int16_t* preEmphasis(int16_t* window, VADFeatsParams params);
+void ne10_test(int16_t* window);
 std::valarray<float> mfcc(std::valarray<float> signal,
                                 uint sampling_frequency,
                                 uint window_length,

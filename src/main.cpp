@@ -18,9 +18,10 @@
 #include <thread>
 #include <unistd.h>
 
-#include "recordmanager.h"
-#include "mqtt_client.h"
-//#include "audio.h"
+#include "../include/recordmanager.h"
+#include "../include/mqtt_client.h"
+#include "../include/audio.h"
+#include "../include/features.h"
 using namespace std;
 
 int main(int argc, char* argv[])
@@ -55,10 +56,17 @@ int main(int argc, char* argv[])
 
     audio_thread.join();
     vadfeat_thread.join();*/
-
-    if(manager->test()==false) {
-        cout << "Test run failed..." << endl;
+    random_device rd;  //Will be used to obtain a seed for the random number engine
+    mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
+    uniform_int_distribution<> dis(-32767,32767);
+    int16_t* data = (int16_t*)malloc(sizeof(int16_t)*1024);
+    int16_t* new_data = (int16_t*)malloc(sizeof(int16_t)*1024);
+    for (int n=0; n<1024;n++) {
+        data[n]=dis(gen);
     }
+    VADFeatsParams params;
+    new_data = preEmphasis(data,params);
+    ne10_test(new_data);
     while (true) {
         sleep(2);
     }

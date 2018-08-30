@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "client.h"
+#include "../include/client.h"
 using namespace std;
 
 Client::Client(int port,string address,int queue_max_size) {

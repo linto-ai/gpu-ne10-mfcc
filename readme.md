@@ -38,5 +38,5 @@ Rudy a terminé d'implémenter la partie permettant la détection de la VAD.
 Je suis en train de mettre en place les différentes classes, fonctions, ou algorithmes pour réaliser cette tâche. 
 
 ### Problème en cours
-* Erreur de compilation dans les fichiers standards c?
+* Erreur de compilation dans les fichiers standards c? -> l'options -Iinclude de g++ ne fonctionne pas, on doit utiliser #include "../include/something.h" -> chiant :/=
 * LDCONFIG ou déplacer les bibliothèques statiques directement dans /usr/local/lib (/usr/lib) ?

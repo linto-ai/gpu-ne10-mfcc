@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "circular.h"
+#include "../include/circular.h"
 
 Circular_Buffer::Circular_Buffer(uint32_t size) {
     circular_size = size;

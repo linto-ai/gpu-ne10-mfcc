@@ -1,4 +1,4 @@
-#include "audio.h"
+#include "../include/audio.h"
 #include <iostream>
 
 AudioInput::AudioInput(AudioParameter *params)
