@@ -18,15 +18,7 @@ float computeFBAR(int16_t* window, uint fbar_lfreq_index, uint fbar_hfreq_index,
     return band.sum() / spectrum.sum();
 }
 
-int16_t* preEmphasis(int16_t* window, VADFeatsParams params) {
-	int16_t* new_window = (int16_t*)malloc(sizeof(int16_t)*params.window_width);
-	new_window[0]=window[0];
-	for (int i = 1; i < params.window_width; i++)
-	{
-		new_window[i] = window[i] + window[i-1]*params.preEmphasisFactor;
-	}
-	return new_window;
-}
+
 
 
 int16_t* observation(int16_t* window,int window_length,int overlap, int number) {

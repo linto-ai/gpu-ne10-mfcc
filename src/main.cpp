@@ -64,9 +64,6 @@ int main(int argc, char* argv[])
     for (int n=0; n<1024;n++) {
         data[n]=dis(gen);
     }
-    VADFeatsParams params;
-    new_data = preEmphasis(data,params);
-    ne10_test(new_data);
     while (true) {
         sleep(2);
     }

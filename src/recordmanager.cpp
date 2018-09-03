@@ -16,7 +16,7 @@
  */
 
 
-#include "recordmanager.h"
+#include "../include/recordmanager.h"
 using namespace std;
 
 Record_Manager::Record_Manager(string filename,bool pipe_mode,string meeting_file_name,int32_t buffer_size,int32_t chunkSize) {
