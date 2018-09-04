@@ -41,7 +41,10 @@ private:
     //// Frame processing routines
     // Pre-emphasis and Hamming window
     int16_t* preEmphHam(int16_t* frame, int16_t* hamming, size_t size);
+    
     // Power spectrum computation
     void computePowerSpec(void);
     // Applying log Mel filterbank (LMFB)
+public: 
+    void testNE10(int16_t* frame,int num,int fftSize);
 };

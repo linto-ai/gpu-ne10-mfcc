@@ -38,7 +38,6 @@ int16_t* MFCC::fft(int16_t* frame,int length) {
 		fft_in[k] = frame[k];
 	}
     ne10_fft_r2c_1d_int16_neon(fft_out, fft_in, cfg, 0); // Call the R2C NEON implementation directly
-    cout << "FFT done" << endl;
     int16_t* out = (int16_t*)malloc(sizeof(int16_t)*2*length);
     for (int k=0;k<2*length;k+=2) {
 		out[k] = fft_out[k].r;
@@ -60,6 +59,21 @@ int16_t* MFCC::preEmphHam(int16_t* frame, int16_t* hamming, size_t size) {
     }
     return procFrame;
 }
+
+//// Frame processing routines
+// Pre-emphasis and Hamming window
+void MFCC::testNE10(int16_t* frame,int num,int fftSize) {
+    int16_t* out = (int16_t*)malloc(sizeof(int16_t)*2*fftSize);
+    clock_t begin = clock();
+    for (int k=0;k<num;k++) {
+        out = fft(frame,fftSize);
+    }
+    clock_t end = clock();
+    double elapsed_secs = 1000 * double(end - begin) / CLOCKS_PER_SEC ;
+    cout << "Temps moyen pour " << fftSize << ", " << elapsed_secs/num << " ms"<< endl;
+}
+
+
 
 // Power spectrum computation
 void MFCC::computePowerSpec(void) {
