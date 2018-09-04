@@ -61,12 +61,10 @@ int main(int argc, char* argv[])
     mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
     uniform_int_distribution<> dis(-32767,32767);
     int16_t* data = (int16_t*)malloc(sizeof(int16_t)*16384);
-    int16_t* new_data = (int16_t*)malloc(sizeof(int16_t)*16384);
+    int16_t* new_data = (int16_t*)malloc(sizeof(int16_t)*15384);
     for (int n=0; n<16384;n++) {
         data[n]=dis(gen);
     }
-    MFCC* mfcc = new MFCC();
-    mfcc->testNE10(data,100,16384);
     while (true) {
         sleep(2);
     }

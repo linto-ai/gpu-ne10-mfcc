@@ -37,11 +37,16 @@ int16_t* MFCC::fft(int16_t* frame,int length) {
 	for (int k=0;k<length;k++) {
 		fft_in[k] = frame[k];
 	}
+    //clock_t begin = clock();
     ne10_fft_r2c_1d_int16_neon(fft_out, fft_in, cfg, 0); // Call the R2C NEON implementation directly
-    int16_t* out = (int16_t*)malloc(sizeof(int16_t)*2*length);
+    //clock_t end = clock();
+    //double elapsed_secs = 1000 * double(end - begin) / CLOCKS_PER_SEC ;
+    //cout << "Temps : " << elapsed_secs << " ms"<< endl;
+    int16_t* out = (int16_t*)malloc(sizeof(int16_t)*2*length); 
     for (int k=0;k<2*length;k+=2) {
-		out[k] = fft_out[k].r;
-        out[k+1] = fft_out[k].i;
+		out[k] = fft_out[k].r; // Real part
+        out[k+1] = fft_out[k].i; // Imaginary part
+        // You can cut this last one and divide by 2 the buffer size if you only want Real to Real FFT
 	}
     NE10_FREE(fft_out);                    // Free the allocated output array
     NE10_FREE(fft_in);                     // Free the allocated input array
@@ -60,21 +65,16 @@ int16_t* MFCC::preEmphHam(int16_t* frame, int16_t* hamming, size_t size) {
     return procFrame;
 }
 
-//// Frame processing routines
-// Pre-emphasis and Hamming window
-void MFCC::testNE10(int16_t* frame,int num,int fftSize) {
-    int16_t* out = (int16_t*)malloc(sizeof(int16_t)*2*fftSize);
-    clock_t begin = clock();
-    for (int k=0;k<num;k++) {
-        out = fft(frame,fftSize);
-    }
-    clock_t end = clock();
-    double elapsed_secs = 1000 * double(end - begin) / CLOCKS_PER_SEC ;
-    cout << "Temps moyen pour " << fftSize << ", " << elapsed_secs/num << " ms"<< endl;
-}
-
-
-
 // Power spectrum computation
-void MFCC::computePowerSpec(void) {
+int32_t* MFCC::computePowerSpec(int16_t* frame, int size) {
+    int16_t* fft_out = (int16_t*)malloc(sizeof(int16_t)*2*size); // Divide size by 2 for RtoR FFT
+    int32_t* powerSpectralCoef = (int32_t*)malloc(sizeof(int32_t)*size);
+    fft_out = fft(frame,size);
+    for (int i=0; i<2*size; i+=2) { // i<size and i++
+        powerSpectralCoef[i] = pow(fft_out[i],2)+pow(fft_out[i+1],2); //keep classic square
+    }
+    return powerSpectralCoef; 
 }
+
+
+
