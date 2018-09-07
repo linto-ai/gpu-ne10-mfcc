@@ -26,21 +26,31 @@
 class MFCC {
 
 private:
-    const double PI = 4*atan(1.0);   // Pi = 3.14...
-    size_t winLengthSamples, frameShiftSamples, numCepstra, numFFT, numFFTBins, numFilters;
+    const double pi = 4*atan(1.0);   // Pi = 3.14...
+    size_t frameShiftSamples, numCepstra, numFFT, numFFTBins, numFilters;
+    size_t winLengthSamples;
     double preEmphCoef, lowFreq, highFreq;
-    int16_t* frame,hamming;
+    int16_t* frame;
+    float *hamming,*blackman,*povey;
+    int fcoup[27] = {0,100,200,300,400,500,600,700,800,900,1000,1150,1300,1500,1700,2000,2350,2700,3100,3550,4000,4500,5050,5600,6200,6850,7500};
 
 private:
-    // Hertz to Mel conversion
     inline double hz2mel (double f);
-    // Mel to Hertz conversion
     inline double mel2hz (double m);
-    // Cooley-Tukey DIT-FFT recursive function
-    int16_t* fft(int16_t* frame, int length);
-    //// Frame processing routines
-    // Pre-emphasis and Hamming window
-    int16_t* preEmphHam(int16_t* frame, int16_t* hamming, size_t size);  
-    // Power spectrum computation
-    int32_t* computePowerSpec(int16_t* frame, int size);
+    float* fft(float* frame, int length);
+    float* computePowerSpec(float* frame, int size);
+    float* ifft(float* frame,int ifftSize);
+    void MelFilterBank(void);
+    float* MelFilterBank(float* powerSpect, int size,int rate, int numSpec);
+    void initBlackman(void);
+    void initPovey(void);
+public:
+    MFCC(size_t winLengthSamples,double coef);
+    float computeAverage(int16_t* frame,int size);
+    float* preEmphPov(float* frame, size_t size);
+    float* lessAverage(int16_t* frame,int size, float value);
+    float computeEnergy(float* window,int size);
+    int32_t computeVecEnergy(int16_t* frame);
+    void test(int16_t* data,int size);
+    
 };
