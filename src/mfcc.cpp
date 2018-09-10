@@ -26,12 +26,12 @@ MFCC::MFCC(size_t winLengthSamples,double coef) {
 }
 
 // Hertz to Mel conversion
-double MFCC::hz2mel (double f) {
-    return 2595*std::log10 (1+f/700);
+float MFCC::hz2mel (float f) {
+    return 1127.0*std::log(1+f/700);
 }
 
 // Mel to Hertz conversion
-double MFCC::mel2hz (double m) {
+float MFCC::mel2hz (float m) {
     return 700*(std::pow(10,m/2595)-1);
 }
 
@@ -160,23 +160,28 @@ float* MFCC::MelFilterBank(float* powerSpect, int size,int rate, int numSpec) {
     int16_t* nm = (int16_t*)malloc(sizeof(int16_t)*size/2);
     float* x2sig = (float*)malloc(sizeof(float)*size/2);
     float* x1sig = (float*)malloc(sizeof(float)*size/2);
-    float* vecteur = (float*)malloc(sizeof(float)*numSpec);
+    float* vecteur = (float*)malloc(sizeof(float)*(numSpec+1));
+    cout << "After init" << endl;
     for (int i = 1; i < size/2+1;i++) {
         nm[i-1]=0;
         x1[i-1]=0;
-        float f=(rate*500*i)/(size/2);
-        for (int n = 1; i< numSpec+2;n++) {
-            if (f>=fcoup[n-1] and f<fcoup[n]) {
+        float f=(rate/1000*500*i)/(size/2);
+        //cout << "numSpec: " << numSpec << endl;
+        for (int n = 1; n<(numSpec+2);n++) {
+            if (f>=fcoup[n-1] && f<fcoup[n]) {
                 nm[i-1]=n;
                 x1[i-1]=(f-fcoup[n-1])/(fcoup[n]-fcoup[n-1]);
                 x2[i-1]=1-x1[i-1];
-            }   
+            } 
+            //cout << "i: " << i << " n: " << n << endl;  
         }
     }
+    cout << "After 1st loop" << endl;
     for (int m=0;m<size/2;m++) {
         x2sig[m]=x2[m]*powerSpect[m];
         x1sig[m]=x1[m]*powerSpect[m];
     }
+    cout << "After 2nd loop" << endl;
     for (int i=1;i<size/2;i++) {
         if (nm[i-1]-2 > -1) {
             vecteur[nm[i-1]-2]+=x2sig[i-1];
@@ -185,6 +190,7 @@ float* MFCC::MelFilterBank(float* powerSpect, int size,int rate, int numSpec) {
             vecteur[nm[i-1]-1]+=x1sig[i-1];
         }   
     }
+    cout << "After 3rd loop" << endl;
     free(x2);
     free(x1);
     free(nm);
@@ -193,40 +199,94 @@ float* MFCC::MelFilterBank(float* powerSpect, int size,int rate, int numSpec) {
     return vecteur;    
 }
 
+float* MFCC::MelFilterBankKaldi(float* powerSpect, int size, int rate, int numBins,int fftSize,int lowFrequency,int highFrequency) {
+    float* output = (float*)malloc(sizeof(float)*2*numBins);
+    bin* bins = (bin*)malloc(sizeof(bin)*numBins);
+    float fft_bins = fftSize/2;
+    float* this_bin= (float*)malloc(sizeof(float)*fft_bins);
+    //int nyquist = rate/2;
+    //CHECK value
+    float fft_bin_width = (float)rate/(float)fftSize;
+    float mel_low = hz2mel(lowFrequency);
+    float mel_high = hz2mel(highFrequency);
+    float mel_delta = (mel_high - mel_low)/(numBins+1);
+    //cout << "Low " << mel_low << " High " << mel_high << " Delta " << mel_delta;
+    for (int bin = 0; bin < numBins;bin++) {
+        memset(this_bin,0.0f,fft_bins);
+        float left_mel = mel_low + mel_delta * bin;
+        float center_mel = mel_low + mel_delta * (bin+1);
+        float right_mel = mel_low + mel_delta * (bin+2);
+        //cout << "Left " << left_mel << " Center " << center_mel << " Right " << right_mel;
+        int first_index = -1;
+        int last_index = -1;
+        for (int i = 0;i<fft_bins;i++) {
+            float mel = hz2mel(fft_bin_width * i);
+            if (mel > left_mel && mel < right_mel) {
+                if (mel <= center_mel) {
+                    this_bin[i]=(mel - left_mel)/(center_mel - left_mel);
+                } 
+                else {
+                    this_bin[i]=(right_mel - mel)/(right_mel - center_mel);
+                }
+                //cout << "Weight: " << this_bin[i] << "Left " << left_mel<< "Right" << right_mel << endl;
+                if (first_index == -1) {
+                    first_index = i;
+                }
+                last_index = i;
+            }
+        }
+        //cout << first_index << endl;
+        bins[bin].index = first_index;
+        bins[bin].vector = (float*)malloc(sizeof(float)*(last_index + 1 - first_index));
+        //bins[bin].vector = (float*)malloc(sizeof(float)*fft_bins);
+        //memcpy(bins[bin].vector,this_bin+first_index,last_index + 1 - first_index);
+        cout << "[";
+        for (int k=0;k<last_index + 1 - first_index;k++) {
+            bins[bin].vector[k] = this_bin[k+first_index];
+            cout << bins[bin].vector[k] << " " ;
+        }
+        cout << "]" <<endl;
+    }
+    //CHECK INDEX;
+    
+    return output;
+}
+
 
 void MFCC::test(int16_t* data,int size) {
     float average = computeAverage(data,size);
-    cout << "Average : " << average << endl;
+    //cout << "Average : " << average << endl;
     float* dataF = lessAverage(data,size,average);
     float energy = computeEnergy(dataF,size);
-    cout << "Log energy:" << energy << endl; 
+    //cout << "Log energy:" << energy << endl; 
     float* postPov = (float*)malloc(sizeof(float)*size);
+    float* powerSpec = (float*)malloc(sizeof(float)*size/2);
     postPov = preEmphPov(dataF, (size_t)size);
-    cout << "Emph + Povey >>" << endl;
+    //cout << "Emph + Povey >>" << endl;
     /*for (int i=0;i<size;i++) {
         cout << postPov[i] << "    ";
     }*/
     int16_t fftSize = 2 << (int16_t)log2(size);
-    cout << "FFT Size:" << fftSize <<   "Size: " << size << endl;
+    //cout << "FFT Size:" << fftSize <<   "Size: " << size << endl;
     float* fftIn = (float*)malloc(sizeof(float)*fftSize);
     fftIn = postPov;
     memset(fftIn+size,0,fftSize-size);
     float* fftOut = fft(fftIn,fftSize);
-    cout << "Abs after FFT :" << endl;
-    for (int i=0;i<fftSize/2;i++) {
-        complex<float> c = fftOut[2*i] + fftOut[2*i+1]*i;
-        fftOut[i] = abs(c);
-        cout << fftOut[i] << "    ";
+    //cout << "Abs after FFT :" << endl;
+    float first_energy = fftOut[0] * fftOut[0];
+    float last_energy = fftOut[1] * fftOut[1];
+    for (int i=1;i<fftSize/2;i++) {
+        powerSpec[i] = fftOut[2*i]*fftOut[2*i] + fftOut[2*i+1]*fftOut[2*i+1];
     }
-    cout << "Before Mel" << endl;
-    /*float* melVec = MelFilterBank(fftOut,fftSize,16000,24);
-    cout << "After Mel Filter Bank" << endl;
-    for (int i=0;i<24;i++) {
-        cout << melVec[i] << "    ";
+    powerSpec[0] = first_energy;
+    powerSpec[fftSize/2-1] = last_energy;
+    float* melVec = MelFilterBankKaldi(powerSpec,size,16000,40,fftSize,40,7800);
+    //cout << "After Mel Filter Bank" << endl;
+    /*for (int i=0;i<24;i++) {  
         melVec[i] = log(melVec[i]);
-    }
-    // DCT OR FFT
-    */
+        //cout << melVec[i] << "    ";
+    }*/
+    // DCT OR IFFT
 }  
 // 
 

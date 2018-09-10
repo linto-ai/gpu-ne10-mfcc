@@ -23,6 +23,12 @@
 #include <math.h>
 #include "NE10.h"
 
+typedef struct bin {
+    int index;
+    float* vector;
+};
+
+
 class MFCC {
 
 private:
@@ -35,8 +41,8 @@ private:
     int fcoup[27] = {0,100,200,300,400,500,600,700,800,900,1000,1150,1300,1500,1700,2000,2350,2700,3100,3550,4000,4500,5050,5600,6200,6850,7500};
 
 private:
-    inline double hz2mel (double f);
-    inline double mel2hz (double m);
+    float hz2mel (float f);
+    float mel2hz (float m);
     float* fft(float* frame, int length);
     float* computePowerSpec(float* frame, int size);
     float* ifft(float* frame,int ifftSize);
@@ -44,6 +50,7 @@ private:
     float* MelFilterBank(float* powerSpect, int size,int rate, int numSpec);
     void initBlackman(void);
     void initPovey(void);
+    float* MelFilterBankKaldi(float* powerSpect, int size, int rate, int numSpec,int fftSize,int lowFrequency,int highFrequency);
 public:
     MFCC(size_t winLengthSamples,double coef);
     float computeAverage(int16_t* frame,int size);
