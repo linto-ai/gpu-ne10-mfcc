@@ -21,43 +21,58 @@
 #include <vector>
 #include <map>
 #include <math.h>
+#include <ctime>
+#include "blockingqueue.h"
 #include "NE10.h"
 
 typedef struct bin {
     int index;
+    int size;
     float* vector;
+};
+
+typedef enum windows_type {
+    blackman,
+    povey,
+    hamming,
+    hann
 };
 
 
 class MFCC {
 
-private:
+public:
     const double pi = 4*atan(1.0);   // Pi = 3.14...
-    size_t frameShiftSamples, numCepstra, numFFT, numFFTBins, numFilters;
-    size_t winLengthSamples;
-    double preEmphCoef, lowFreq, highFreq;
-    int16_t* frame;
-    float *hamming,*blackman,*povey;
-    int fcoup[27] = {0,100,200,300,400,500,600,700,800,900,1000,1150,1300,1500,1700,2000,2350,2700,3100,3550,4000,4500,5050,5600,6200,6850,7500};
+    int size,rate=16000,fftSize,lowFrequency=40,highFrequency=7800; //Parameters with default values
+    float preEmphCoef,*window,*lifter_coefs,cepstralLifter = 22.0,** matrix;
+    int numCep = 40,numBins = 40;
+    bin* bins;
+    bool lift=true;
+    enum windows_type type;
+    BlockingQueue<int16_t*>* input_queue;
 
 private:
     float hz2mel (float f);
     float mel2hz (float m);
-    float* fft(float* frame, int length);
-    float* computePowerSpec(float* frame, int size);
-    float* ifft(float* frame,int ifftSize);
-    void MelFilterBank(void);
-    float* MelFilterBank(float* powerSpect, int size,int rate, int numSpec);
+    float* fft(float* frame);
+    float* ifft(float* frame);
     void initBlackman(void);
     void initPovey(void);
-    float* MelFilterBankKaldi(float* powerSpect, int size, int rate, int numSpec,int fftSize,int lowFrequency,int highFrequency);
-public:
-    MFCC(size_t winLengthSamples,double coef);
-    float computeAverage(int16_t* frame,int size);
-    float* preEmphPov(float* frame, size_t size);
-    float* lessAverage(int16_t* frame,int size, float value);
-    float computeEnergy(float* window,int size);
+    void initHann(void);
+    void initHamming(void);
+    void initMelFilterBank(void);
+    float* computeMelFilterBank(float* powerSpect);
+    void initDCTMatrix(void);
+    float* computeDCT(float* vec);
+    float computeAverage(int16_t* frame);
+    float* preEmph(float* frame);
+    float* lessAverage(int16_t* frame, float value);
+    float computeEnergy(float* frame);
+    float vecMul(float* vec1, float* vec2,int size);
     int32_t computeVecEnergy(int16_t* frame);
-    void test(int16_t* data,int size);
-    
+public:
+    MFCC(size_t size,float coef,enum windows_type type);
+    void computeFrame(int16_t* data);
+    void setInput(BlockingQueue<int16_t*>* queue);
+    void compute(void);
 };

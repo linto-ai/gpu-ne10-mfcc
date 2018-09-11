@@ -2,7 +2,7 @@ CC = g++
 CCFLAGS= -Wall -pthread -lpaho-mqtt3cs -lpulse-simple -lpulse -lNE10
 EXEC_NAME= audio_test
 LIBS= -L/usr/local/lib/ 
-OBJ = main.o circular.o recordmanager.o client.o  mqtt_client.o features.o audio.o mfcc.o
+OBJ = main.o circular.o recordmanager.o client.o  mqtt_client.o features.o audio.o mfcc.o vadengine.o vadfeatprocessor.o
 
 all: $(EXEC_NAME) clean
 
@@ -32,6 +32,12 @@ audio.o : src/audio.cpp include/audio.h
 
 mfcc.o : src/mfcc.cpp include/mfcc.h
 	$(CC) $(CCFLAGS) -c -o mfcc.o src/mfcc.cpp 
+
+vadfeatprocessor.o : src/vadfeatprocessor.cpp include/vadfeatprocessor.h
+	$(CC) $(CCFLAGS) -c -o vadfeatprocessor.o src/vadfeatprocessor.cpp 
+
+vadengine.o : src/vadengine.cpp include/vadengine.h
+	$(CC) $(CCFLAGS) -c -o vadengine.o src/vadengine.cpp 
 
 clean :
 	rm -rf *.o

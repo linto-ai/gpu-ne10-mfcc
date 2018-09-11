@@ -6,19 +6,11 @@
 #include <iostream>
 
 #include "blockingqueue.h"
+#include "features.h"
 
-const double PI = 3.14159265358979323846264338328L;
 typedef std::complex<double> Complex;
 typedef std::valarray<Complex> CArray;
 typedef std::valarray<double> DArray;
-
-struct VADFeatsParams{
-    u_int32_t samplingRate = 16000;
-    u_int16_t window_width = 1024; //TODO: Change to 2048
-    u_int16_t overlap = 0;
-    u_int16_t fbar_lfreq = 80;
-    u_int16_t fbar_hfreq = 1000;
-};
 
 class VADFeatProcessor
 {
