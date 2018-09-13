@@ -75,7 +75,7 @@ void Record_Manager::OpenMeetingFile() {
 }*/
 
 
-bool Record_Manager::sendMFCCFeatures(void* MFCCFeatures,int size,ofstream f) {
+bool Record_Manager::sendMFCCFeatures(float* MFCCFeatures,int num_cep,ofstream f) {
 
     return true;
 }

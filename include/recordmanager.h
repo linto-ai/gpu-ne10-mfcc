@@ -34,7 +34,7 @@ class Record_Manager {
     bool writeData(int16_t* data, int elements,enum event e);
     bool sendBinaryFlow(int16_t* data,int size);
     //void setInput(BlockingQueue<int16_t*>* queue);
-    bool sendMFCCFeatures(void* MFCCFeatures,int size,ofstream f);
+    bool sendMFCCFeatures(float* MFCCFeatures,int num_cep,ofstream f);
     void OpenMeetingFile();
     bool test();
     void run();

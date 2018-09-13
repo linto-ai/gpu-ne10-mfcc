@@ -317,7 +317,7 @@ void MFCC::computeFrame(int16_t* data) {
 
 
 void MFCC::compute(void) {
-
+    
 }
 
 
