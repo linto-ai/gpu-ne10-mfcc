@@ -21,8 +21,9 @@ using namespace std;
 
 MFCC::MFCC(size_t size,float coef,enum windows_type type) {
     this->size = size;
-    preEmphCoef = coef;
-    fftSize = 2 << (int16_t)log2(size);
+    pre_emph_coef = coef;
+    fft_size = 2 << (int16_t)log2(size);
+    window = new float[size];
     switch(type) {
     case blackman:
         initBlackman();
@@ -37,6 +38,12 @@ MFCC::MFCC(size_t size,float coef,enum windows_type type) {
         initHann();
         break;
     }
+    mfcc = new float[num_cep];
+    mel_energies = new float[num_bins];
+    power_spec = new float[fft_size];
+    fft_vector = new float[fft_size];
+    data_float = new float[size];
+    lifter_coefs = new float[num_cep];
     initMelFilterBank();
     initDCTMatrix();
 }
@@ -58,7 +65,6 @@ float MFCC::mel2hz (float m) {
 
 //Initialize the Hann window 
 void MFCC::initHann(void) {
-    window = (float*)(malloc(sizeof(float)*size));
     for (int i=0;i<size;i++) {
         window[i] = 0.54-0.46*cos(2*pi*i/(size));
     }
@@ -66,7 +72,6 @@ void MFCC::initHann(void) {
 
 //Initialize the Blackman window
 void MFCC::initBlackman(void) {
-    window = (float*)(malloc(sizeof(float)*size));
     for (int i=0;i<size;i++) {
         window[i] = 0.42 - 0.5*cos(2*pi*i/size) +0.08*cos(4*pi*i/size);
     }
@@ -74,7 +79,6 @@ void MFCC::initBlackman(void) {
 
 //Initialize the Povey window
 void MFCC::initPovey(void) {
-    window = (float*)(malloc(sizeof(float)*size));
     for (int i=0;i<size;i++) {
         window[i] = pow(0.5-0.5*cos(2*pi*i/(size-1)),0.85);
     }
@@ -82,7 +86,6 @@ void MFCC::initPovey(void) {
 
 //Initialize the Hamming window
 void MFCC::initHamming(void) {
-    window = (float*)(malloc(sizeof(float)*size));
     for (int i=0;i<size;i++) {
         window[i] = 0.54-0.46*cos(2*pi*i/(size));
     }
@@ -119,88 +122,90 @@ float MFCC::computeEnergy(float* frame)
 }
 
 // Pre-emphasis and window
-float* MFCC::preEmph(float* frame) {
-    float* procFrame = (float*)malloc(sizeof(float)*size);
-    procFrame[0] = window[0]*(frame[0]-preEmphCoef * frame[0]); // frame[0] -= preEmphCoef * frame[0];
-    for (int i=1; i<size; i++) {    
-        procFrame[i] = window[i] * (frame[i] - preEmphCoef * frame[i-1]);
+void MFCC::preEmph(float* frame) {
+    float* frame_save = new float[size];
+    for (int i = 0;i<size;i++) {
+        frame_save[i] = frame[i];
     }
-    return procFrame;
+    frame[0] = window[0]*(frame_save[0]-pre_emph_coef * frame_save[0]); // frame[0] -= pre_emph_coef * frame[0];
+    for (int i=1; i<size; i++) {    
+        frame[i] = window[i] * (frame_save[i] - pre_emph_coef * frame_save[i-1]);
+    }
+    free(frame_save);
 }
 
 // Initialize coefs of Matrix for DCT computation and lifter vector
 void MFCC::initDCTMatrix(void) {
     //TODO Use NE10 matrix
-    matrix = new float*[numCep];
-    lifter_coefs = (float*)malloc(sizeof(float)*numCep);
-    for (int i = 0; i < numCep; ++i) {
-        matrix[i] = new float[numBins]; 
+    matrix = new float*[num_cep];
+    for (int i = 0; i < num_cep; ++i) {
+        matrix[i] = new float[num_bins]; 
         if (lift) {
-            lifter_coefs[i] = 1.0+0.5*cepstralLifter*std::sin(pi*i/cepstralLifter);
+            lifter_coefs[i] = 1.0+0.5*cepstral_lifter_coef*std::sin(pi*i/cepstral_lifter_coef);
         }
         else {
             lifter_coefs[i]=1.0;
         }
     }
-    for (int j=0;j<numBins;j++) {
-        matrix[0][j] = std::sqrt(1.0/numBins);
+    for (int j=0;j<num_bins;j++) {
+        matrix[0][j] = std::sqrt(1.0/num_bins);
     }
-    for (int k =1 ;k<numCep;k++) {
-        for (int n=0;n<numBins;n++) {
-            matrix[k][n] = std::sqrt(2.0/numBins) * std::cos(pi/numBins*(n+0.5)*k);
+    for (int k =1 ;k<num_cep;k++) {
+        for (int n=0;n<num_bins;n++) {
+            matrix[k][n] = std::sqrt(2.0/num_bins) * std::cos(pi/num_bins*(n+0.5)*k);
         }
     }
 }
 
 // Compute the DCT using matrix and vector multiplication
-float* MFCC::computeDCT(float* vec) {
+void MFCC::computeDCT(float* vec) {
     //TODO Use NE10 matrix / vector and relatives functions
-    float* mfcc = (float*)malloc(sizeof(float)*numCep);
-    for (int i=0 ;i<numCep;i++) {
+    //float* mfcc = (float*)malloc(sizeof(float)*num_cep);
+    for (int i=0 ;i<num_cep;i++) {
         mfcc[i] = 0;
-        for (int j=0;j<numBins;j++) {
+        for (int j=0;j<num_bins;j++) {
             mfcc[i] += matrix[i][j] * vec[j];
         }
         mfcc[i] *= lifter_coefs[i];
     }
-    return mfcc;
+    //return mfcc;
 }
 
 // FFT using NE10 library
-float* MFCC::fft(float* frame) {
-    ne10_int32_t fftSize = this->fftSize;
-    ne10_fft_r2c_cfg_float32_t cfg = ne10_fft_alloc_r2c_float32(fftSize);      // Allocate a configuration structure for R2C/C2R FP32 NEON FFTs of size fftSize
-    ne10_float32_t *fft_in          = (ne10_float32_t*)malloc(fftSize * sizeof(ne10_float32_t));         // Allocate an input array of samples
-    ne10_fft_cpx_float32_t *fft_out = (ne10_fft_cpx_float32_t*)malloc(fftSize * sizeof(ne10_fft_cpx_float32_t)); // Allocate an (oversized) output array of samples
+void MFCC::fft(float* frame) {
+    ne10_int32_t ne_size = fft_size;
+    ne10_fft_r2c_cfg_float32_t cfg = ne10_fft_alloc_r2c_float32(ne_size);      // Allocate a configuration structure for R2C/C2R FP32 NEON FFTs of size fft_size
+    ne10_float32_t *fft_in          = (ne10_float32_t*)malloc(ne_size * sizeof(ne10_float32_t));         // Allocate an input array of samples
+    ne10_fft_cpx_float32_t *fft_out = (ne10_fft_cpx_float32_t*)malloc(ne_size * sizeof(ne10_fft_cpx_float32_t)); // Allocate an (oversized) output array of samples
 	// FFT
-	for (int k=0;k<size;k++) {
+	for (int k=0;k<fft_size;k++) {
 		fft_in[k] = frame[k];
 	}
     ne10_fft_r2c_1d_float32_neon(fft_out, fft_in, cfg); // Call the R2C NEON implementation directly
-    float* out = (float*)malloc(sizeof(float)*fftSize); 
-    for (int k=0;k<fftSize/2;k++) {
-		out[2*k] = fft_out[k].r; // Real part
-        out[2*k+1] = fft_out[k].i; // Imaginary part
+
+    for (int k=0;k<fft_size/2;k++) {
+		frame[2*k] = fft_out[k].r; // Real part
+        frame[2*k+1] = fft_out[k].i; // Imaginary part
 	}
     NE10_FREE(fft_out);                    // Free the allocated output array
     NE10_FREE(fft_in);                     // Free the allocated input array
     ne10_fft_destroy_r2c_float32(cfg); // Free the allocated configuration structure
-    return out;
+    //return out;
 }
 
 // IFFT using NE10 library
 float* MFCC::ifft(float* frame) {
-    ne10_int32_t fftSize = this->fftSize;
-    ne10_fft_r2c_cfg_float32_t cfg = ne10_fft_alloc_r2c_float32(fftSize);      // Allocate a configuration structure for R2C/C2R FP32 NEON FFTs of size fftSize
-    ne10_fft_cpx_float32_t *fft_in = (ne10_fft_cpx_float32_t*)malloc(fftSize * sizeof(ne10_fft_cpx_float32_t));         // Allocate an input array of samples
-    ne10_float32_t  *fft_out = (ne10_float32_t*)malloc(fftSize * sizeof(ne10_float32_t)); // Allocate an (oversized) output array of samples
-    for (int k=0;k<fftSize;k++) {
+    ne10_int32_t ne_size = this->fft_size;
+    ne10_fft_r2c_cfg_float32_t cfg = ne10_fft_alloc_r2c_float32(ne_size);      // Allocate a configuration structure for R2C/C2R FP32 NEON FFTs of size fft_size
+    ne10_fft_cpx_float32_t *fft_in = (ne10_fft_cpx_float32_t*)malloc(ne_size * sizeof(ne10_fft_cpx_float32_t));         // Allocate an input array of samples
+    ne10_float32_t  *fft_out = (ne10_float32_t*)malloc(ne_size * sizeof(ne10_float32_t)); // Allocate an (oversized) output array of samples
+    for (int k=0;k<fft_size;k++) {
 		fft_in[k].r = frame[k];
         fft_in[k].i = 0;
 	}
     ne10_fft_c2r_1d_float32_neon(fft_out, fft_in, cfg); // Call the R2C NEON implementation directly
-    float* out = (float*)malloc(sizeof(float)*fftSize); 
-    for (int k=0;k<fftSize/2;k++) {
+    float* out = (float*)malloc(sizeof(float)*fft_size); 
+    for (int k=0;k<fft_size/2;k++) {
 		out[k] = fft_out[k];
 	}
     NE10_FREE(fft_out);                    // Free the allocated output array
@@ -211,15 +216,15 @@ float* MFCC::ifft(float* frame) {
 
 
 void MFCC::initMelFilterBank(void) {
-    bins = (bin*)malloc(sizeof(bin)*numBins);
-    float* output = (float*)malloc(sizeof(float)*2*numBins);
-    float fft_bins = fftSize/2;
+    bins = (bin*)malloc(sizeof(bin)*num_bins);
+    float* output = (float*)malloc(sizeof(float)*2*num_bins);
+    float fft_bins = fft_size/2;
     float* this_bin= (float*)malloc(sizeof(float)*fft_bins);
-    float fft_bin_width = (float)rate/(float)fftSize;
-    float mel_low = hz2mel(lowFrequency);
-    float mel_high = hz2mel(highFrequency);
-    float mel_delta = (mel_high - mel_low)/(numBins+1);
-    for (int bin = 0; bin < numBins;bin++) {
+    float fft_bin_width = (float)rate/(float)fft_size;
+    float mel_low = hz2mel(low_frequency);
+    float mel_high = hz2mel(high_frequency);
+    float mel_delta = (mel_high - mel_low)/(num_bins+1);
+    for (int bin = 0; bin < num_bins;bin++) {
         memset(this_bin,0.0f,fft_bins);
         float left_mel = mel_low + mel_delta * bin;
         float center_mel = mel_low + mel_delta * (bin+1);
@@ -253,14 +258,14 @@ void MFCC::initMelFilterBank(void) {
 }
 
 
-float* MFCC::computeMelFilterBank(float* powerSpect) {
-    float* mel_energies = (float*)malloc(sizeof(float)*numBins);
-    for (int i=0;i<numBins;i++) {
+void MFCC::computeMelFilterBank(float* powerSpect) {
+    //float* mel_energies = (float*)malloc(sizeof(float)*num_bins);
+    for (int i=0;i<num_bins;i++) {
         int offset = bins[i].index;
         float* vec = bins[i].vector;
         mel_energies[i] = log(vecMul(vec,powerSpect+offset,bins[i].size));
     }
-    return mel_energies;
+    //return mel_energies;
 }
 
 
@@ -278,31 +283,35 @@ float MFCC::vecMul(float* vec1, float* vec2,int size) {
 
 void MFCC::computeFrame(int16_t* data) {
     const clock_t begin_time = clock();
-    // Computation of one frame using Kaldi pipeline
+    for (int i=0;i<size;i++) {
+        data_float[i] = (float)data[i];
+    }
     float average = computeAverage(data);  // Frame average
-    float* dataF = lessAverage(data,average); // Less average value
-    float energy = computeEnergy(dataF); // Energ
-    float* postWindow = (float*)malloc(sizeof(float)*size);
-    float* powerSpec = (float*)malloc(sizeof(float)*size/2);
-    postWindow = preEmph(dataF); // Povey window and pre-emphasis
-    float* fftIn = (float*)malloc(sizeof(float)*fftSize);
-    fftIn = postWindow;
-    memset(fftIn+size,0,fftSize-size);
-    float* fftOut = fft(fftIn); // FFT using NE10
-    float first_energy = fftOut[0] * fftOut[0];
-    float last_energy = fftOut[1] * fftOut[1];
-    for (int i=1;i<fftSize/2;i++) {
-        powerSpec[i] = fftOut[2*i]*fftOut[2*i] + fftOut[2*i+1]*fftOut[2*i+1]; //Computation of Power Spectrum
+    float energy = computeEnergy(data_float); // Energ
+    preEmph(data_float); // Povey window and pre-emphasis
+    for (int i=0;i<size;i++) {
+        fft_vector[i] = data_float[i];
     }
-    powerSpec[0] = first_energy;
-    powerSpec[fftSize/2-1] = last_energy;
-    float* log_mel_energies = computeMelFilterBank(powerSpec); // Multiplication with MelFilterBank matrix
-    float* dct_out = computeDCT(log_mel_energies); // Compute DCT
-    float* mfcc = (float*)malloc(sizeof(float)*numCep);
+    for (int i=size;i<fft_size;i++) {
+        fft_vector[i] = 0;
+    }
+    fft(fft_vector); // FFT using NE10
+    float first_energy = fft_vector[0] * fft_vector[0];
+    float last_energy = fft_vector[1] * fft_vector[1];
+    for (int i=1;i<fft_size/2;i++) {
+        power_spec[i] = fft_vector[2*i]*fft_vector[2*i] + fft_vector[2*i+1]*fft_vector[2*i+1]; //Computation of Power Spectrum
+    }
+    power_spec[0] = first_energy;
+    power_spec[fft_size/2-1] = last_energy;
+    computeMelFilterBank(power_spec); // Multiplication with MelFilterBank matrix
+    computeDCT(mel_energies); // Compute DCT
     mfcc[0] = energy;
-    for (int i=1;i<numCep;i++) { // Get MFCC
-        mfcc[i] = dct_out[i];
+    cout << "MFCC: " << mfcc[0] <<" ";
+    for (int i=1;i<num_cep;i++) { // Get MFCC
+        //mfcc[i] = dct_out[i];
+        cout << mfcc[i] <<" ";
     }
+    cout << endl;
     std::cout << "Time in ms: " << float( clock () - begin_time ) /(CLOCKS_PER_SEC)*1000<< endl;
 }
 

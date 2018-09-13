@@ -43,29 +43,31 @@ class MFCC {
 
 public:
     const double pi = 4*atan(1.0);   // Pi = 3.14...
-    int size,rate=16000,fftSize,lowFrequency=40,highFrequency=7800; //Parameters with default values
-    float preEmphCoef,*window,*lifter_coefs,cepstralLifter = 22.0,** matrix;
+    int size,rate=16000,fft_size,low_frequency=40,high_frequency=7800; //Parameters with default values
+    float pre_emph_coef=0.97,*window,*lifter_coefs,cepstral_lifter_coef = 22.0,** matrix;
     int numCep = 40,numBins = 40;
+    int num_cep=13,num_bins=40;
     bin* bins;
     bool lift=true;
     enum windows_type type;
     BlockingQueue<int16_t*>* input_queue;
+    float *mfcc,*mel_energies,*power_spec,*fft_vector,*data_float;
 
 private:
     float hz2mel (float f);
     float mel2hz (float m);
-    float* fft(float* frame);
+    void fft(float* frame);
     float* ifft(float* frame);
     void initBlackman(void);
     void initPovey(void);
     void initHann(void);
     void initHamming(void);
     void initMelFilterBank(void);
-    float* computeMelFilterBank(float* powerSpect);
+    void computeMelFilterBank(float* powerSpect);
     void initDCTMatrix(void);
-    float* computeDCT(float* vec);
+    void computeDCT(float* vec);
     float computeAverage(int16_t* frame);
-    float* preEmph(float* frame);
+    void preEmph(float* frame);
     float* lessAverage(int16_t* frame, float value);
     float computeEnergy(float* frame);
     float vecMul(float* vec1, float* vec2,int size);
