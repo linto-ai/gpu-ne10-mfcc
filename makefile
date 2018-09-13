@@ -1,8 +1,8 @@
 CC = g++
-CCFLAGS= -Wall -pthread -lpaho-mqtt3cs -lpulse-simple -lpulse -lNE10
+CCFLAGS= -Wall -pthread -lpulse-simple -lpulse -lNE10
 EXEC_NAME= audio_test
 LIBS= -L/usr/local/lib/ 
-OBJ = main.o circular.o recordmanager.o client.o  mqtt_client.o features.o audio.o mfcc.o vadengine.o vadfeatprocessor.o
+OBJ = main.o circular.o recordmanager.o client.o audio.o mfcc.o
 
 all: $(EXEC_NAME) clean
 
@@ -21,24 +21,12 @@ recordmanager.o : src/recordmanager.cpp include/recordmanager.h
 client.o : src/client.cpp include/client.h
 	$(CC) $(CCFLAGS) -c -o client.o src/client.cpp 
 
-mqtt_client.o : src/mqtt_client.cpp include/mqtt_client.h
-	$(CC) $(CCFLAGS) -c -o mqtt_client.o src/mqtt_client.cpp 
-
-features.o : src/features.cpp include/features.h
-	$(CC) $(CCFLAGS) -c -o features.o src/features.cpp 
-
 audio.o : src/audio.cpp include/audio.h
 	$(CC) $(CCFLAGS) -c -o audio.o src/audio.cpp 
 
 mfcc.o : src/mfcc.cpp include/mfcc.h
 	$(CC) $(CCFLAGS) -c -o mfcc.o src/mfcc.cpp 
-
-vadfeatprocessor.o : src/vadfeatprocessor.cpp include/vadfeatprocessor.h
-	$(CC) $(CCFLAGS) -c -o vadfeatprocessor.o src/vadfeatprocessor.cpp 
-
-vadengine.o : src/vadengine.cpp include/vadengine.h
-	$(CC) $(CCFLAGS) -c -o vadengine.o src/vadengine.cpp 
-
+	
 clean :
 	rm -rf *.o
 
