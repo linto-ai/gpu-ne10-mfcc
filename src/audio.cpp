@@ -7,7 +7,7 @@ AudioInput::AudioInput(AudioParameter *params)
     ss.format = PA_SAMPLE_S16LE;
     ss.channels = params->channels;
     ss.rate = params->sampleRate;
-    chunk_size = params->chunkSize * 2;
+    chunk_size = params->chunkSize;
 
     // Open connexion
     s = pa_simple_new(NULL,"Audio", PA_STREAM_RECORD, NULL, "ASR", &ss, NULL, NULL, NULL);

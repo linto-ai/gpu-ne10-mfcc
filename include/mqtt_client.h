@@ -33,6 +33,8 @@ typedef struct mqtt_message {
     std::string payload;
 };
 
+extern BlockingQueue<mqtt_message>* mqtt_queue;
+
 void delivered(void *context, MQTTClient_deliveryToken dt);
 int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *message);
 void connlost(void *context, char *cause);

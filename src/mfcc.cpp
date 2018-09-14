@@ -38,12 +38,13 @@ MFCC::MFCC(int size,int sliding_samples, enum windows_type type) {
         initHann();
         break;
     }
-    mfcc = new float[num_cep];
-    mel_energies = new float[num_bins];
-    power_spec = new float[fft_size];
-    fft_vector = new float[fft_size];
-    data_float = new float[size];
-    lifter_coefs = new float[num_cep];
+    mfcc = new float[num_cep]();
+    mel_energies = new float[num_bins]();
+    power_spec = new float[fft_size]();
+    fft_vector = new float[fft_size]();
+    data_float = new float[size]();
+    lifter_coefs = new float[num_cep]();
+    output_queue = new BlockingQueue<float*>(20);
     initMelFilterBank();
     initDCTMatrix();
 }
@@ -282,12 +283,11 @@ float MFCC::vecMul(float* vec1, float* vec2,int size) {
 
 
 void MFCC::computeFrame(int16_t* data) {
-    const clock_t begin_time = clock();
     for (int i=0;i<size;i++) {
         data_float[i] = (float)data[i];
     }
     float average = computeAverage(data);  // Frame average
-    float energy = computeEnergy(data_float); // Energ
+    float energy = computeEnergy(data_float); // Energy
     preEmph(data_float); // Povey window and pre-emphasis
     for (int i=0;i<size;i++) {
         fft_vector[i] = data_float[i];
@@ -306,13 +306,6 @@ void MFCC::computeFrame(int16_t* data) {
     computeMelFilterBank(power_spec); // Multiplication with MelFilterBank matrix
     computeDCT(mel_energies); // Compute DCT
     mfcc[0] = energy;
-    cout << "MFCC: " << mfcc[0] <<" ";
-    for (int i=1;i<num_cep;i++) { // Get MFCC
-        //mfcc[i] = dct_out[i];
-        cout << mfcc[i] <<" ";
-    }
-    cout << endl;
-    std::cout << "Time in ms: " << float( clock () - begin_time ) /(CLOCKS_PER_SEC)*1000<< endl;
 }
 
 void MFCC::compute(void) {
@@ -322,6 +315,7 @@ void MFCC::compute(void) {
         input = input_queue->pop(); //2*size - sliding_samples
         computeFrame(input);
         output_queue->push(mfcc);
+        usleep(100);
         computeFrame(input+size-sliding_samples);
         output_queue->push(mfcc);
     }

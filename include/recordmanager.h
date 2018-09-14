@@ -31,13 +31,12 @@ enum event {Recording, Meeting, None};
 
 class Record_Manager {
     public:
-    Record_Manager(string filename,bool pipe_mode,string meeting_file_name,string mfcc_file_name,int32_t buffer_size,int32_t chunkSize);
-    bool writeData(int16_t* data, int elements);
+    Record_Manager(string filename,bool pipe_mode,string meeting_file_name,string mfcc_file_name,int32_t buffer_size,int32_t chunkSize,int num_cep);
+    void writeData(int16_t* data,float* mfcc1,float* mfcc2,int num_cep);
     bool sendBinaryFlow(int16_t* data,int size);
     void setAudioInput(BlockingQueue<int16_t*>* queue);
     void setMFCCInput(BlockingQueue<int16_t*>* queue);
     void setMFCCInput(BlockingQueue<float*>* queue);
-    bool sendMFCCFeatures(float* MFCCFeatures,int num_cep,ofstream f);
     void OpenMeetingFile();
     void run();
     ~Record_Manager();
@@ -47,6 +46,7 @@ class Record_Manager {
     bool mfcc_on = false;
 
     private:
+    int num_cep= 13;
     string name;
     ofstream stream;
     string meeting_file_name;
@@ -57,7 +57,6 @@ class Record_Manager {
     BlockingQueue<int16_t*> *audio_queue;
     BlockingQueue<float*> *mfcc_queue;
     int32_t chunkSize;
-    enum event event;
 };
 
 #endif

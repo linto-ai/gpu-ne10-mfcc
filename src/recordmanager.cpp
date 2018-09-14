@@ -19,7 +19,7 @@
 #include "../include/recordmanager.h"
 using namespace std;
 
-Record_Manager::Record_Manager(string filename,bool pipe_mode,string meeting_file_name,string mfcc_file_name,int32_t buffer_size,int32_t chunkSize) {
+Record_Manager::Record_Manager(string filename,bool pipe_mode,string meeting_file_name,string mfcc_file_name,int32_t buffer_size,int32_t chunkSize,int num_cep=13) {
     if (pipe_mode) {
         mkfifo(name.c_str(), S_IWUSR | S_IRUSR | S_IRGRP | S_IROTH);
     }
@@ -41,50 +41,26 @@ void Record_Manager::setMFCCInput(BlockingQueue<float*>* queue) {
 }
 
 
-bool Record_Manager::writeData(int16_t* data, int elements) {
+void Record_Manager::writeData(int16_t* data,float *mfcc1,float* mfcc2,int num_cep) {
     if (recording) {
-       if (stream.is_open())
-        {
-            // If it is open we can do our writing to the file.
-            stream.write((char*)data, sizeof(int16_t)*elements);
-            return true;
-        }
-        else
-        {
-            // If the file isn't open something went wrong. Point that out.
-            cout << "Something went wrong with opening the file!";
-            return false;
+       if (!(stream.is_open())){
+           stream.open (name, ios::out | ios::binary);
         } 
+        stream.write((char*)data, sizeof(int16_t)*chunkSize);
     }
     if (meeting_recording) {
-        if (meeting_stream.is_open())
-        {
-            // If it is open we can do our writing to the file.
-            meeting_stream.write((char*)data, sizeof(int16_t)*elements);
-            return true;
+        if (!(meeting_stream.is_open())) {
+            OpenMeetingFile(); 
         }
-        else
-        {
-            // If the file isn't open something went wrong. Point that out.
-            cout << "Something went wrong with opening the file!";
-            return false;
-        }
+        meeting_stream.write((char*)data, sizeof(int16_t)*chunkSize); 
     }
     if (mfcc_on) {
-        if (mfcc_stream.is_open())
-        {
-            // If it is open we can do our writing to the file.
-            mfcc_stream.write((char*)data, sizeof(int16_t)*elements);
-            return true;
+        if (!(mfcc_stream.is_open())) {
+            mfcc_stream.open (mfcc_file_name, ios::out | ios::binary);
         }
-        else
-        {
-            // If the file isn't open something went wrong. Point that out.
-            cout << "Something went wrong with opening the file!";
-            return false;
-        }
+        mfcc_stream.write((char*)mfcc1, sizeof(float)*num_cep);
+        mfcc_stream.write((char*)mfcc2, sizeof(float)*num_cep);
     }
-    return false;
 }
 
 void Record_Manager::OpenMeetingFile() {
@@ -93,41 +69,25 @@ void Record_Manager::OpenMeetingFile() {
     this->meeting_stream.open(this->meeting_file_name, ios::out | ios::binary);
 }
 
-/*void Record_Manager::setInput(BlockingQueue<int16_t*>* queue){
-    input_queue = queue;
-}*/
-
-
-bool Record_Manager::sendMFCCFeatures(float* MFCCFeatures,int num_cep,ofstream f) {
-
-    return true;
-}
-
 void Record_Manager::run() {
     while(true) {
         int16_t* audio_input = audio_queue->pop();
-        float* mfcc_input = mfcc_queue->pop();
-        if (event == Meeting) {
-            if (meeting_stream.is_open() == false) {
-                OpenMeetingFile();
-            }
-            writeData(audio_input,chunkSize);
-
+        float* mfcc_input_1 = mfcc_queue->pop();
+        for (int i=0;i<num_cep;i++) {
+            cout << mfcc_input_1[i] << " ";
         }
-        if (event == Recording){   
-            writeData(audio_input,chunkSize);
+        float* mfcc_input_2 = mfcc_queue->pop();
+        cout << endl;
+        for (int i=0;i<num_cep;i++) {
+            cout << mfcc_input_2[i] << " ";
         }
-        if (event == None) {
-            if (meeting_stream.is_open()) {
-                meeting_stream.close();
-            }
-            if (stream.is_open()) {
-                stream.close();
-            }
-        }
+        cout << endl;
+        writeData(audio_input,mfcc_input_1,mfcc_input_2,num_cep);
     }
 }
 
 Record_Manager::~Record_Manager() {
     stream.close();
+    meeting_stream.close();
+    mfcc_stream.close();
 }

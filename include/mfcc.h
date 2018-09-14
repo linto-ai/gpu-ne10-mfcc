@@ -22,6 +22,7 @@
 #include <map>
 #include <math.h>
 #include <ctime>
+#include <unistd.h>
 #include "blockingqueue.h"
 #include "NE10.h"
 
@@ -73,10 +74,10 @@ private:
     float computeEnergy(float* frame);
     float vecMul(float* vec1, float* vec2,int size);
     int32_t computeVecEnergy(int16_t* frame);
-    void compute(void);
+    void computeFrame(int16_t* data);
 public:
     MFCC(int size,int sliding_samples,enum windows_type type);
-    void computeFrame(int16_t* data);
+    void compute(void);
     void setInput(BlockingQueue<int16_t*>* queue);
     BlockingQueue<float*>* subscribe();
     
