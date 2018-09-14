@@ -16,6 +16,8 @@
  */
 #include "../include/mqtt_client.h"
 
+BlockingQueue<mqtt_message>* mqtt_queue;
+
 MQTT_Client::MQTT_Client(string ip,int16_t port,int QOS,string topics[], int elements) {
   this->ip = ip;
   this->port = port;
@@ -59,7 +61,7 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *m
   Document d;
   d.Parse(value);
   cout <<  GetParseError_En(d.GetParseError()) << endl;
-  if (strcmp(topicName,"wuw/wuw-spotted") == 0) {
+  /*if (strcmp(topicName,"wuw/wuw-spotted") == 0) {
     cout << "WUW detected !" << endl;
   }
   else if (strcmp(topicName,"utterance/stop") == 0) {
@@ -76,8 +78,11 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *m
   }
   else if (strcmp(topicName,"utterance/start") == 0) {
     cout << "VAD detection should start !" << endl;
-  }
-
+  }*/
+  mqtt_message msg;
+  msg.topic = string(topicName);
+  msg.payload = string((char*)message->payload);
+  mqtt_queue->push(msg);
   MQTTClient_freeMessage(&message);
   MQTTClient_free(topicName);
   free(value);

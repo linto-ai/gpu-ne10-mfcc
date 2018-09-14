@@ -19,9 +19,9 @@
 using namespace std;
 
 
-MFCC::MFCC(size_t size,float coef,enum windows_type type) {
+MFCC::MFCC(int size,int sliding_samples, enum windows_type type) {
     this->size = size;
-    pre_emph_coef = coef;
+    this->sliding_samples=sliding_samples;
     fft_size = 2 << (int16_t)log2(size);
     window = new float[size];
     switch(type) {
@@ -315,9 +315,21 @@ void MFCC::computeFrame(int16_t* data) {
     std::cout << "Time in ms: " << float( clock () - begin_time ) /(CLOCKS_PER_SEC)*1000<< endl;
 }
 
-
 void MFCC::compute(void) {
-    
+    int16_t* input; 
+    while(true)
+    {
+        input = input_queue->pop(); //2*size - sliding_samples
+        computeFrame(input);
+        output_queue->push(mfcc);
+        computeFrame(input+size-sliding_samples);
+        output_queue->push(mfcc);
+    }
+}
+
+BlockingQueue<float*>* MFCC::subscribe(void)
+{
+   return output_queue;
 }
 
 

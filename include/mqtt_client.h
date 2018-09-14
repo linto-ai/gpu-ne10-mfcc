@@ -14,9 +14,11 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 #ifndef MQTTH
 #include <iostream>
 #include <string>
+#include "blockingqueue.h"
 #include "MQTTClient.h"
 #include "rapidjson/document.h"
 #include "rapidjson/writer.h"
@@ -26,9 +28,15 @@
 using namespace rapidjson;
 using namespace std;
 
+typedef struct mqtt_message {
+    std::string topic;
+    std::string payload;
+};
+
 void delivered(void *context, MQTTClient_deliveryToken dt);
 int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *message);
 void connlost(void *context, char *cause);
+int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *message);
 
 class MQTT_Client {
     public:

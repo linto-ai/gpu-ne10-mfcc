@@ -23,6 +23,7 @@
 #include <sys/stat.h> 
 #include <chrono>
 #include "circular.h" 
+#include "mqtt_client.h"
 using namespace std;
 using namespace std::chrono;
 
@@ -30,24 +31,31 @@ enum event {Recording, Meeting, None};
 
 class Record_Manager {
     public:
-    Record_Manager(string filename,bool pipe_mode,string meeting_file_name,int32_t buffer_size,int32_t chunkSize);
-    bool writeData(int16_t* data, int elements,enum event e);
+    Record_Manager(string filename,bool pipe_mode,string meeting_file_name,string mfcc_file_name,int32_t buffer_size,int32_t chunkSize);
+    bool writeData(int16_t* data, int elements);
     bool sendBinaryFlow(int16_t* data,int size);
-    //void setInput(BlockingQueue<int16_t*>* queue);
+    void setAudioInput(BlockingQueue<int16_t*>* queue);
+    void setMFCCInput(BlockingQueue<int16_t*>* queue);
+    void setMFCCInput(BlockingQueue<float*>* queue);
     bool sendMFCCFeatures(float* MFCCFeatures,int num_cep,ofstream f);
     void OpenMeetingFile();
-    bool test();
     void run();
-    void setEvent(enum event new_event);
     ~Record_Manager();
     
+    bool recording = false;
+    bool meeting_recording = false;
+    bool mfcc_on = false;
+
     private:
     string name;
     ofstream stream;
     string meeting_file_name;
     ofstream meeting_stream;
+    string mfcc_file_name;
+    ofstream mfcc_stream;
     Circular_Buffer *buffer;
-    //BlockingQueue<int16_t*> *queue;
+    BlockingQueue<int16_t*> *audio_queue;
+    BlockingQueue<float*> *mfcc_queue;
     int32_t chunkSize;
     enum event event;
 };

@@ -19,21 +19,30 @@
 #include "../include/recordmanager.h"
 using namespace std;
 
-Record_Manager::Record_Manager(string filename,bool pipe_mode,string meeting_file_name,int32_t buffer_size,int32_t chunkSize) {
+Record_Manager::Record_Manager(string filename,bool pipe_mode,string meeting_file_name,string mfcc_file_name,int32_t buffer_size,int32_t chunkSize) {
     if (pipe_mode) {
         mkfifo(name.c_str(), S_IWUSR | S_IRUSR | S_IRGRP | S_IROTH);
     }
-    
     this->name = filename;
     this->chunkSize = chunkSize;
+    this->mfcc_file_name = mfcc_file_name;
     stream.open (name, ios::out | ios::binary);
+    mfcc_stream.open (mfcc_file_name, ios::out | ios::binary);
     this->meeting_file_name = meeting_file_name;
     this->buffer = new Circular_Buffer(buffer_size);
 }
 
+void Record_Manager::setAudioInput(BlockingQueue<int16_t*>* queue) {
+        audio_queue=queue;
+}
 
-bool Record_Manager::writeData(int16_t* data, int elements, enum event e) {
-    if (e == Recording) {
+void Record_Manager::setMFCCInput(BlockingQueue<float*>* queue) {
+    mfcc_queue=queue;
+}
+
+
+bool Record_Manager::writeData(int16_t* data, int elements) {
+    if (recording) {
        if (stream.is_open())
         {
             // If it is open we can do our writing to the file.
@@ -47,11 +56,25 @@ bool Record_Manager::writeData(int16_t* data, int elements, enum event e) {
             return false;
         } 
     }
-    else if (e == Meeting) {
+    if (meeting_recording) {
         if (meeting_stream.is_open())
         {
             // If it is open we can do our writing to the file.
             meeting_stream.write((char*)data, sizeof(int16_t)*elements);
+            return true;
+        }
+        else
+        {
+            // If the file isn't open something went wrong. Point that out.
+            cout << "Something went wrong with opening the file!";
+            return false;
+        }
+    }
+    if (mfcc_on) {
+        if (mfcc_stream.is_open())
+        {
+            // If it is open we can do our writing to the file.
+            mfcc_stream.write((char*)data, sizeof(int16_t)*elements);
             return true;
         }
         else
@@ -80,40 +103,19 @@ bool Record_Manager::sendMFCCFeatures(float* MFCCFeatures,int num_cep,ofstream f
     return true;
 }
 
-bool  Record_Manager::test() {
-    int16_t* data = NULL;
-    data = (int16_t*)malloc(sizeof(int16_t)*1024);
-    random_device rd;  //Will be used to obtain a seed for the random number engine
-    mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
-    uniform_int_distribution<> dis(-32767,32767);
-    for (int k=0; k < 10 ; k++) {
-        for (int n=0; n<1024;n++) {
-            data[n]=dis(gen);
-        }
-        buffer->add(data,1024);
-        cout << buffer->getIndex() << endl;
-    }
-    bool ret = Record_Manager::writeData(buffer->getBuffer(),buffer->getSize(),Recording);
-    return ret;
-}
-
-void Record_Manager::setEvent(enum event new_event) {
-    this->event = new_event;
-}
-
-
 void Record_Manager::run() {
     while(true) {
-        //int16_t* input = queue->pop();
+        int16_t* audio_input = audio_queue->pop();
+        float* mfcc_input = mfcc_queue->pop();
         if (event == Meeting) {
             if (meeting_stream.is_open() == false) {
                 OpenMeetingFile();
             }
-            //writeData(input,chunkSize,meeting_stream,event);
+            writeData(audio_input,chunkSize);
 
         }
         if (event == Recording){   
-            //writeData(input,chunkSize,stream,event);
+            writeData(audio_input,chunkSize);
         }
         if (event == None) {
             if (meeting_stream.is_open()) {

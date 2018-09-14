@@ -43,7 +43,7 @@ class MFCC {
 
 public:
     const double pi = 4*atan(1.0);   // Pi = 3.14...
-    int size,rate=16000,fft_size,low_frequency=40,high_frequency=7800; //Parameters with default values
+    int size,sliding_samples,rate=16000,fft_size,low_frequency=40,high_frequency=7800; //Parameters with default values
     float pre_emph_coef=0.97,*window,*lifter_coefs,cepstral_lifter_coef = 22.0,** matrix;
     int numCep = 40,numBins = 40;
     int num_cep=13,num_bins=40;
@@ -51,6 +51,7 @@ public:
     bool lift=true;
     enum windows_type type;
     BlockingQueue<int16_t*>* input_queue;
+    BlockingQueue<float*>* output_queue; 
     float *mfcc,*mel_energies,*power_spec,*fft_vector,*data_float;
 
 private:
@@ -72,9 +73,11 @@ private:
     float computeEnergy(float* frame);
     float vecMul(float* vec1, float* vec2,int size);
     int32_t computeVecEnergy(int16_t* frame);
+    void compute(void);
 public:
-    MFCC(size_t size,float coef,enum windows_type type);
+    MFCC(int size,int sliding_samples,enum windows_type type);
     void computeFrame(int16_t* data);
     void setInput(BlockingQueue<int16_t*>* queue);
-    void compute(void);
+    BlockingQueue<float*>* subscribe();
+    
 };
