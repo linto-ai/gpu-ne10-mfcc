@@ -24,9 +24,8 @@ void AudioInput::run()
 {
     int ret;
     int error;
-    int16_t *buffer;
+    int16_t *buffer = new int16_t[chunk_size];
     while (true) {
-        buffer = new int16_t[chunk_size];
         ret = pa_simple_read(s,buffer,chunk_size,&error);
         for (BlockingQueue<int16_t*> * queue : outPutQueues)
         {

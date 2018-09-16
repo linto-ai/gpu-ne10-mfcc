@@ -17,6 +17,7 @@
 #include "../include/mqtt_client.h"
 
 BlockingQueue<mqtt_message>* mqtt_queue;
+bool new_message = false;
 
 MQTT_Client::MQTT_Client(string ip,int16_t port,int QOS,string topics[], int elements) {
   this->ip = ip;
@@ -58,6 +59,7 @@ int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *m
   msg.topic = string((char*)topicName,topicLen);
   msg.payload = string((char*)message->payload,message->payloadlen);
   mqtt_queue->push(msg);
+  new_message = true;
   MQTTClient_freeMessage(&message);
   MQTTClient_free(topicName);
   return 1;

@@ -102,12 +102,10 @@ float MFCC::computeAverage(int16_t* frame) {
 }
 
 // Return the frame less average value for every sample
-float* MFCC::lessAverage(int16_t* frame, float value) {
-    float* new_frame = (float*)malloc(sizeof(float)*size);
+void MFCC::lessAverage(float* new_frame, float value) {
     for (int i=0;i<size;i++) {
-        new_frame[i]=frame[i]-value;
+        new_frame[i]-=-value;
     }
-    return new_frame;
 }
 
 
@@ -286,8 +284,9 @@ void MFCC::computeFrame(int16_t* data) {
     for (int i=0;i<size;i++) {
         data_float[i] = (float)data[i];
     }
-    float average = computeAverage(data);  // Frame average
-    float energy = computeEnergy(data_float); // Energy
+    average = computeAverage(data);  // Frame average
+    lessAverage(data_float,average);
+    energy = computeEnergy(data_float); // Energy
     preEmph(data_float); // Povey window and pre-emphasis
     for (int i=0;i<size;i++) {
         fft_vector[i] = data_float[i];
@@ -296,8 +295,8 @@ void MFCC::computeFrame(int16_t* data) {
         fft_vector[i] = 0;
     }
     fft(fft_vector); // FFT using NE10
-    float first_energy = fft_vector[0] * fft_vector[0];
-    float last_energy = fft_vector[1] * fft_vector[1];
+    first_energy = fft_vector[0] * fft_vector[0];
+    last_energy = fft_vector[1] * fft_vector[1];
     for (int i=1;i<fft_size/2;i++) {
         power_spec[i] = fft_vector[2*i]*fft_vector[2*i] + fft_vector[2*i+1]*fft_vector[2*i+1]; //Computation of Power Spectrum
     }

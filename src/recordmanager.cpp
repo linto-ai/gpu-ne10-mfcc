@@ -33,7 +33,7 @@ Record_Manager::Record_Manager(string filename,bool pipe_mode,string meeting_fil
 }
 
 void Record_Manager::setAudioInput(BlockingQueue<int16_t*>* queue) {
-        audio_queue=queue;
+    audio_queue=queue;
 }
 
 void Record_Manager::setMFCCInput(BlockingQueue<float*>* queue) {
@@ -69,21 +69,57 @@ void Record_Manager::OpenMeetingFile() {
     this->meeting_stream.open(this->meeting_file_name, ios::out | ios::binary);
 }
 
-void Record_Manager::run() {
-    while(true) {
-        int16_t* audio_input = audio_queue->pop();
-        float* mfcc_input_1 = mfcc_queue->pop();
-        for (int i=0;i<num_cep;i++) {
-            cout << mfcc_input_1[i] << " ";
+
+void Record_Manager::switchState() {
+    if (new_message) { //TODO add mqtt protocol
+        msg = mqtt_queue->pop();
+        Document d;
+        d.Parse((msg.payload).c_str());
+        if ((msg.topic).compare("wuw/wuw-spotted")) {
+            recording = true;
         }
-        float* mfcc_input_2 = mfcc_queue->pop();
-        cout << endl;
+        else if((msg.topic).compare("utterance/stop")) {
+            recording = false;
+            stream.close();
+        }
+        else if((msg.topic).compare("lintoclient/action")) {
+            Value& s = d["value"];
+            if (strcmp(s.GetString(),"start_meeting")==0 ) {
+                meeting_recording = true;
+            }
+            else if (strcmp(s.GetString(),"pause_meeting")==0 ) {
+                meeting_recording = false;
+            }
+            else if (strcmp(s.GetString(),"stop_meeting")==0 ) {
+                meeting_recording = false;
+                meeting_stream.close();
+            }
+            else if (strcmp(s.GetString(),"resume_meeting")==0 ) {
+                meeting_recording = true;
+            }
+        }
+        new_message = false;
+    }
+}
+
+void Record_Manager::run() {
+    int16_t* audio_input;
+    float *mfcc_input_1,*mfcc_input_2;
+    while(true) {
+        switchState();
+        audio_input = audio_queue->pop();
+        mfcc_input_1 = mfcc_queue->pop();
+        /*for (int i=0;i<num_cep;i++) {
+            cout << mfcc_input_1[i] << " ";
+        }*/
+        mfcc_input_2 = mfcc_queue->pop();
+        /*cout << endl;
         for (int i=0;i<num_cep;i++) {
             cout << mfcc_input_2[i] << " ";
         }
-        cout << endl;
+        cout << endl;*/
         writeData(audio_input,mfcc_input_1,mfcc_input_2,num_cep);
-    }
+   }
 }
 
 Record_Manager::~Record_Manager() {

@@ -38,6 +38,7 @@ class Record_Manager {
     void setMFCCInput(BlockingQueue<int16_t*>* queue);
     void setMFCCInput(BlockingQueue<float*>* queue);
     void OpenMeetingFile();
+    void switchState();
     void run();
     ~Record_Manager();
     
@@ -57,6 +58,7 @@ class Record_Manager {
     BlockingQueue<int16_t*> *audio_queue;
     BlockingQueue<float*> *mfcc_queue;
     int32_t chunkSize;
+    mqtt_message msg;
 };
 
 #endif

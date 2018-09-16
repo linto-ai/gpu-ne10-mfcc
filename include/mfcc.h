@@ -54,6 +54,7 @@ public:
     BlockingQueue<int16_t*>* input_queue;
     BlockingQueue<float*>* output_queue; 
     float *mfcc,*mel_energies,*power_spec,*fft_vector,*data_float;
+    float average,energy,first_energy,last_energy;
 
 private:
     float hz2mel (float f);
@@ -70,7 +71,7 @@ private:
     void computeDCT(float* vec);
     float computeAverage(int16_t* frame);
     void preEmph(float* frame);
-    float* lessAverage(int16_t* frame, float value);
+    void lessAverage(float* new_frame,float value);
     float computeEnergy(float* frame);
     float vecMul(float* vec1, float* vec2,int size);
     int32_t computeVecEnergy(int16_t* frame);

@@ -34,6 +34,7 @@ typedef struct mqtt_message {
 };
 
 extern BlockingQueue<mqtt_message>* mqtt_queue;
+extern bool new_message;
 
 void delivered(void *context, MQTTClient_deliveryToken dt);
 int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *message);
