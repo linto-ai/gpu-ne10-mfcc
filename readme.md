@@ -16,8 +16,25 @@ make
 ### Parser JSON
 I use RapidJSON, because it's rapid :D . To be honest, I used the first library I found. It seems to be enough at this time.
 
+### Communication
+The communication between threads is possible through BlockingQueue. You just have to set the input queue of one thread with the output queue of a second one.
+Audio thread can provide multiple queues. In this way, Record Manager and MFCC can get input samples.
+
 ### MFCC computation
-The calculation of the MFCC is possible for a window at the moment. The extraction takes about 2% of the relative time (0.3 ms for 25 ms of audio).
+MFCC computation using Kaldi pipeline for one frame.
+* Compute average value of the frame
+* Cast inputs to float
+* Remove the average value for each sample
+* Compute energy of the frame
+* Apply pre-emphasis and windowing (Povey, Hamming, Hann or Blackman)
+* Apply Fast Fourier Transform (using NE10)
+* Compute abs(X)^2 for each sample
+* Compute the last vector with MelFilterBank matrix (we should change matrix by NE10 matrix)
+* Apply Discret cosine transform
+* Replace first value by energy
+
+To get MFCC for all frames, we compute the first frame from 0 to size samples. Then, we compute the frame from size-sliding_samples to 2*size-slinding_samples.
+Currently, all class attributes are public, so you can easily modify MFCC parameters in main.cpp. (It should change with the time)
 
 ### Pulse Audio
 This program uses pulse audio API to get audio in real-time. 
