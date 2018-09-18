@@ -16,6 +16,7 @@
             "pipe_mode":false,
             "meeting_file":"/home/pi/meeting_files/meeting",
             "mfcc_file":"/home/pi/mfcc.out",
+            "mfcc_string_file":"/home/pi/mfcc_string.out",
             "circular_buffer_size":800
         },
         "mfcc" : {

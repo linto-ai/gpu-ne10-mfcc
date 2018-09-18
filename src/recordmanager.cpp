@@ -20,7 +20,7 @@
 using namespace std;
 using namespace rapidjson;
 
-Record_Manager::Record_Manager(string filename,bool pipe_mode,string meeting_file_name,string mfcc_file_name,int32_t buffer_size,int32_t chunkSize,int num_cep=13) {
+Record_Manager::Record_Manager(string filename,bool pipe_mode,string meeting_file_name,string mfcc_file_name,string mfcc_string_name,int32_t buffer_size,int32_t chunkSize,int num_cep=13) {
     if (pipe_mode) {
         mkfifo(name.c_str(), S_IWUSR | S_IRUSR | S_IRGRP | S_IROTH);
     }
@@ -30,6 +30,8 @@ Record_Manager::Record_Manager(string filename,bool pipe_mode,string meeting_fil
     mfcc_stream.open (mfcc_file_name, ios::out | ios::binary);
     this->meeting_file_name = meeting_file_name;
     this->buffer = new Circular_Buffer(buffer_size);
+    this->mfcc_string_file_name = mfcc_string_name;
+    mfcc_string_stream.open (mfcc_string_name, ios::out);
 }
 
 void Record_Manager::setAudioInput(BlockingQueue<int16_t*>* queue) {
@@ -70,11 +72,11 @@ void Record_Manager::writeMFCC(float* mfcc1,float* mfcc2) {
 }
 
 void Record_Manager::writeStringMFCC(string* mfcc1,string* mfcc2) {
-    if (!(mfcc_stream.is_open())) {
+    if (!(mfcc_string_stream.is_open())) {
         cout << "MFCC File has been closed !" << endl;
     }
-    mfcc_stream.write((char*)mfcc1, sizeof(float)*num_cep);
-    mfcc_stream.write((char*)mfcc2, sizeof(float)*num_cep);
+    mfcc_string_stream.write((char*)mfcc1, sizeof(float)*num_cep);
+    mfcc_string_stream.write((char*)mfcc2, sizeof(float)*num_cep);
 }
 
 
@@ -147,6 +149,7 @@ void Record_Manager::run() {
             writeMFCC(mfcc_input_1,mfcc_input_2);
         }
         if (mfcc_string_on) {
+            cout << "I'm in !" << endl;
             mfcc_string_1 = string_mfcc_queue->pop();
             mfcc_string_2 = string_mfcc_queue->pop();
             writeStringMFCC(mfcc_string_1,mfcc_string_2);

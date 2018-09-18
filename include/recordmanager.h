@@ -37,7 +37,7 @@ enum event {Recording, Meeting, None};
 
 class Record_Manager {
     public:
-    Record_Manager(string filename,bool pipe_mode,string meeting_file_name,string mfcc_file_name,int32_t buffer_size,int32_t chunkSize,int num_cep);
+    Record_Manager(string filename,bool pipe_mode,string meeting_file_name,string mfcc_file_name,string mfcc_string_name,int32_t buffer_size,int32_t chunkSize,int num_cep);
     void writeAudio(int16_t* audio);
     void writeMeeting(int16_t* audio);
     void writeMFCC(float* mfcc1,float* mfcc2);
@@ -52,11 +52,14 @@ class Record_Manager {
     void run();
     ~Record_Manager();
 
-    private:
     bool recording = false,meeting_recording = false,mfcc_on = false,mfcc_string_on = false;
+
+    private:
     int num_cep;
     string name;
+    string mfcc_string_file_name;
     ofstream stream;
+    ofstream mfcc_string_stream;
     string meeting_file_name;
     ofstream meeting_stream;
     string mfcc_file_name;

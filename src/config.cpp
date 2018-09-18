@@ -42,7 +42,8 @@ void parseConfigFile(string pathname,config *conf) {
     conf->files.file_name = (d["files"]["file_name"]).GetString(); 
     conf->files.pipe_mode = (d["files"]["pipe_mode"]).GetBool(); 
     conf->files.meeting_file = (d["files"]["meeting_file"]).GetString();
-    conf->files.mfcc_file = (d["files"]["mfcc_file"]).GetString();     
+    conf->files.mfcc_file = (d["files"]["mfcc_string_file"]).GetString();
+    conf->files.mfcc_string_file = (d["files"]["mfcc_file"]).GetString();         
     conf->files.circular_buffer_size = (d["files"]["circular_buffer_size"]).GetInt();
     conf->mfcc.frame_size = (d["mfcc"]["frame_size"]).GetInt();
     conf->mfcc.sliding_samples = (d["mfcc"]["sliding_samples"]).GetInt();  
