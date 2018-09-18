@@ -18,6 +18,7 @@
 
 #include "../include/recordmanager.h"
 using namespace std;
+using namespace rapidjson;
 
 Record_Manager::Record_Manager(string filename,bool pipe_mode,string meeting_file_name,string mfcc_file_name,int32_t buffer_size,int32_t chunkSize,int num_cep=13) {
     if (pipe_mode) {
@@ -26,7 +27,6 @@ Record_Manager::Record_Manager(string filename,bool pipe_mode,string meeting_fil
     this->name = filename;
     this->chunkSize = chunkSize;
     this->mfcc_file_name = mfcc_file_name;
-    stream.open (name, ios::out | ios::binary);
     mfcc_stream.open (mfcc_file_name, ios::out | ios::binary);
     this->meeting_file_name = meeting_file_name;
     this->buffer = new Circular_Buffer(buffer_size);
@@ -40,28 +40,43 @@ void Record_Manager::setMFCCInput(BlockingQueue<float*>* queue) {
     mfcc_queue=queue;
 }
 
+void Record_Manager::setStringMFCCInput(BlockingQueue<string*>* queue) {
+    string_mfcc_queue=queue;
+}
 
-void Record_Manager::writeData(int16_t* data,float *mfcc1,float* mfcc2,int num_cep) {
-    if (recording) {
-       if (!(stream.is_open())){
-           stream.open (name, ios::out | ios::binary);
-        } 
-        stream.write((char*)data, sizeof(int16_t)*chunkSize);
+void Record_Manager::writeAudio(int16_t* audio) {
+    if (!(stream.is_open())){
+       cout << "File has been closed !" << endl;
     }
-    if (meeting_recording) {
-        if (!(meeting_stream.is_open())) {
-            OpenMeetingFile(); 
-        }
-        meeting_stream.write((char*)data, sizeof(int16_t)*chunkSize); 
-    }
-    if (mfcc_on) {
-        if (!(mfcc_stream.is_open())) {
-            mfcc_stream.open (mfcc_file_name, ios::out | ios::binary);
-        }
-        mfcc_stream.write((char*)mfcc1, sizeof(float)*num_cep);
-        mfcc_stream.write((char*)mfcc2, sizeof(float)*num_cep);
+    else {
+        stream.write((char*)audio, sizeof(int16_t)*chunkSize);
+    } 
+}
+
+void Record_Manager::writeMeeting(int16_t* audio) {
+    if (!(meeting_stream.is_open())) {
+        cout << "Meeting File has been closed !" << endl;
+    } else {
+        meeting_stream.write((char*)audio, sizeof(int16_t)*chunkSize); 
     }
 }
+
+void Record_Manager::writeMFCC(float* mfcc1,float* mfcc2) {
+    if (!(mfcc_stream.is_open())) {
+        cout << "MFCC File has been closed !" << endl;
+    }
+    mfcc_stream.write((char*)mfcc1, sizeof(float)*num_cep);
+    mfcc_stream.write((char*)mfcc2, sizeof(float)*num_cep);
+}
+
+void Record_Manager::writeStringMFCC(string* mfcc1,string* mfcc2) {
+    if (!(mfcc_stream.is_open())) {
+        cout << "MFCC File has been closed !" << endl;
+    }
+    mfcc_stream.write((char*)mfcc1, sizeof(float)*num_cep);
+    mfcc_stream.write((char*)mfcc2, sizeof(float)*num_cep);
+}
+
 
 void Record_Manager::OpenMeetingFile() {
     milliseconds ms = duration_cast< milliseconds >(system_clock::now().time_since_epoch());
@@ -71,54 +86,71 @@ void Record_Manager::OpenMeetingFile() {
 
 
 void Record_Manager::switchState() {
-    if (new_message) { //TODO add mqtt protocol
+    if (new_message>0) { //TODO add mqtt protocol
         msg = mqtt_queue->pop();
-        Document d;
-        d.Parse((msg.payload).c_str());
-        if ((msg.topic).compare("wuw/wuw-spotted")) {
+        cout << "Topic: " << msg.topic << " Payload: " << msg.payload << endl;
+        if ((msg.topic).compare("wuw/wuw-spotted") == 0) {
             recording = true;
+            stream.open (name, ios::out | ios::binary);
+            cout << "Opening command file !" << endl;
         }
-        else if((msg.topic).compare("utterance/stop")) {
+        else if((msg.topic).compare("utterance/stop") == 0) {
             recording = false;
             stream.close();
+            cout << "Closing command file !" << endl;
         }
-        else if((msg.topic).compare("lintoclient/action")) {
+        else if((msg.topic).compare("lintoclient/action") == 0) {
+            Document d;
+            d.Parse((msg.payload).c_str());
             Value& s = d["value"];
-            if (strcmp(s.GetString(),"start_meeting")==0 ) {
+            if (strcmp(s.GetString(),"start_meeting") == 0) {
+                OpenMeetingFile();
                 meeting_recording = true;
+                cout << "Meeting Starting" << endl;
             }
-            else if (strcmp(s.GetString(),"pause_meeting")==0 ) {
+            else if (strcmp(s.GetString(),"pause_meeting") == 0) {
                 meeting_recording = false;
+                cout << "Meeting on pause" << endl;
             }
-            else if (strcmp(s.GetString(),"stop_meeting")==0 ) {
+            else if (strcmp(s.GetString(),"stop_meeting") == 0) {
                 meeting_recording = false;
                 meeting_stream.close();
+                cout << "Meeting ended" << endl;
             }
-            else if (strcmp(s.GetString(),"resume_meeting")==0 ) {
+            else if (strcmp(s.GetString(),"resume_meeting") == 0) {
                 meeting_recording = true;
+                cout << "Resuming meeting" << endl;
             }
         }
-        new_message = false;
+        new_message--;
     }
 }
+
+
 
 void Record_Manager::run() {
     int16_t* audio_input;
     float *mfcc_input_1,*mfcc_input_2;
+    string *mfcc_string_1,*mfcc_string_2;
     while(true) {
         switchState();
         audio_input = audio_queue->pop();
-        mfcc_input_1 = mfcc_queue->pop();
-        /*for (int i=0;i<num_cep;i++) {
-            cout << mfcc_input_1[i] << " ";
-        }*/
-        mfcc_input_2 = mfcc_queue->pop();
-        /*cout << endl;
-        for (int i=0;i<num_cep;i++) {
-            cout << mfcc_input_2[i] << " ";
+        if (recording) {
+            writeAudio(audio_input);
         }
-        cout << endl;*/
-        writeData(audio_input,mfcc_input_1,mfcc_input_2,num_cep);
+        if (meeting_recording) {
+            writeMeeting(audio_input);
+        }
+        if (mfcc_on) {
+            mfcc_input_1 = mfcc_queue->pop();
+            mfcc_input_2 = mfcc_queue->pop();
+            writeMFCC(mfcc_input_1,mfcc_input_2);
+        }
+        if (mfcc_string_on) {
+            mfcc_string_1 = string_mfcc_queue->pop();
+            mfcc_string_2 = string_mfcc_queue->pop();
+            writeStringMFCC(mfcc_string_1,mfcc_string_2);
+        } 
    }
 }
 

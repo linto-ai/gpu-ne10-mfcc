@@ -45,6 +45,8 @@ MFCC::MFCC(int size,int sliding_samples, enum windows_type type) {
     data_float = new float[size]();
     lifter_coefs = new float[num_cep]();
     output_queue = new BlockingQueue<float*>(20);
+    string_output_queue = new BlockingQueue<string*>(20);
+    mfcc_string = new string[num_cep];
     initMelFilterBank();
     initDCTMatrix();
 }
@@ -305,25 +307,50 @@ void MFCC::computeFrame(int16_t* data) {
     computeMelFilterBank(power_spec); // Multiplication with MelFilterBank matrix
     computeDCT(mel_energies); // Compute DCT
     mfcc[0] = energy;
+    if (string_conversion) {
+        for (int i=0;i<num_cep;i++) {
+           mfcc_string[i] = to_string(mfcc[i]);
+        }
+    }  
 }
 
 void MFCC::compute(void) {
-    int16_t* input; 
-    while(true)
-    {
-        input = input_queue->pop(); //2*size - sliding_samples
-        computeFrame(input);
-        output_queue->push(mfcc);
-        usleep(100);
-        computeFrame(input+size-sliding_samples);
-        output_queue->push(mfcc);
+    int16_t* input;
+    if (string_conversion) {
+        while(true)
+        {
+            input = input_queue->pop(); //2*size - sliding_samples
+            computeFrame(input);
+            string_output_queue->push(mfcc_string);
+            usleep(100);
+            computeFrame(input+size-sliding_samples);
+            string_output_queue->push(mfcc_string);
+        }
     }
+    else {
+        while(true)
+        {
+            input = input_queue->pop(); //2*size - sliding_samples
+            computeFrame(input);
+            output_queue->push(mfcc);
+            usleep(100);
+            computeFrame(input+size-sliding_samples);
+            output_queue->push(mfcc);
+        }
+    } 
+    
 }
 
 BlockingQueue<float*>* MFCC::subscribe(void)
 {
    return output_queue;
 }
+
+BlockingQueue<string*>* MFCC::stringSubscribe(void)
+{
+   return string_output_queue;
+}
+
 
 
 

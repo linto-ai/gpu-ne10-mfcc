@@ -16,14 +16,14 @@
  */
 #include "../include/mqtt_client.h"
 
-BlockingQueue<mqtt_message>* mqtt_queue;
-bool new_message = false;
+BlockingQueue<mqtt_message> *mqtt_queue;
+int new_message = 0;
 
 MQTT_Client::MQTT_Client(string ip,int16_t port,int QOS,string topics[], int elements) {
+  mqtt_queue = new BlockingQueue<mqtt_message>(20);
   this->ip = ip;
   this->port = port;
   string addr = "tcp://" + ip + ":" + to_string(port);
-  cout << addr.c_str() << endl;
   MQTTClient_connectOptions conn_opts = MQTTClient_connectOptions_initializer;
   if (MQTTClient_create(&mqtt_client, addr.c_str(), "ASR" ,MQTTCLIENT_PERSISTENCE_NONE, NULL) != MQTTCLIENT_SUCCESS) {
     cout << "MQTT_Client creation failed" << endl;
@@ -35,6 +35,9 @@ MQTT_Client::MQTT_Client(string ip,int16_t port,int QOS,string topics[], int ele
   }
   if (MQTTClient_connect(mqtt_client, &conn_opts) != MQTTCLIENT_SUCCESS) {
     cout << "MQTT connection failed" << endl;
+  }
+  else {
+    cout << "Connected to " << addr.c_str() << endl;
   }
   for (int i = 0; i < elements; i++) {
     if (MQTTClient_subscribe(mqtt_client,(topics[i]).c_str(), QOS)!= MQTTCLIENT_SUCCESS) {
@@ -56,10 +59,10 @@ void delivered(void *context, MQTTClient_deliveryToken dt) {
 
 int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *message) {
   mqtt_message msg;
-  msg.topic = string((char*)topicName,topicLen);
+  msg.topic = string((char*)topicName);
   msg.payload = string((char*)message->payload,message->payloadlen);
   mqtt_queue->push(msg);
-  new_message = true;
+  new_message++;
   MQTTClient_freeMessage(&message);
   MQTTClient_free(topicName);
   return 1;

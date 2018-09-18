@@ -1,0 +1,28 @@
+{ 
+        "audio" : {
+            "sample_rate":16000,
+            "channels":1
+        },
+        "mqtt" : {
+            "topics": [
+                "wuw/wuw-spotted","utterance/start","utterance/stop","lintoclient/action"
+            ],
+            "mqtt_addr":"localhost",
+            "mqtt_port":1883,
+            "mqtt_qos":1
+        },
+        "files" : {
+            "file_name":"/home/pi/command.raw",
+            "pipe_mode":false,
+            "meeting_file":"/home/pi/meeting_files/meeting",
+            "mfcc_file":"/home/pi/mfcc.out",
+            "circular_buffer_size":800
+        },
+        "mfcc" : {
+            "frame_size":400,
+            "sliding_samples":160,
+            "num_cep":13,
+            "num_bins":40,
+            "window_type":"povey"
+        }
+}

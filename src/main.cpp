@@ -21,25 +21,27 @@
 #include "../include/recordmanager.h"
 #include "../include/audio.h"
 #include "../include/mfcc.h"
+#include "../include/config.h"
 using namespace std;
 
 int main(int argc, char* argv[])
 {
     //TODO Add config file
-    int frame_size = 400,sliding_samples = 160,num_cep = 13;
-    MFCC *mfcc = new MFCC(frame_size,sliding_samples,povey); // MFCC window size and sliding part
+    config conf;
+    parseConfigFile("config.json",&conf);
+    MFCC *mfcc = new MFCC(conf.mfcc.frame_size,conf.mfcc.sliding_samples,conf.mfcc.window); // MFCC window size and sliding part
     AudioParameter audioParams;
-        audioParams.sampleRate = 16000;
-        audioParams.channels = 1;
-        audioParams.chunkSize = 2*frame_size-sliding_samples; // 2 windows for MFCC less sliding part
-    Record_Manager *manager = new Record_Manager("test.raw",false,"meeting","mfcc.out",800,audioParams.chunkSize,num_cep);
+        audioParams.sampleRate = conf.audio.sample_rate;
+        audioParams.channels = conf.audio.channels;
+        audioParams.chunkSize = 2*conf.mfcc.frame_size-conf.mfcc.sliding_samples; 
+    Record_Manager *manager = new Record_Manager(conf.files.file_name,conf.files.pipe_mode,conf.files.meeting_file,conf.files.mfcc_file,conf.files.circular_buffer_size,audioParams.chunkSize,conf.mfcc.num_cep);
     AudioInput* input = new AudioInput(&audioParams);
-    string topics[4] = {"wuw/wuw-spotted","utterance/start","utterance/stop","lintoclient/action"};
-    MQTT_Client *mqtt = new MQTT_Client("localhost",1883,1,topics,4);
+    MQTT_Client *mqtt = new MQTT_Client(conf.mqtt.mqtt_addr,conf.mqtt.mqtt_port,conf.mqtt.mqtt_qos,conf.mqtt.topics,conf.mqtt.topics_number);
     // Link modules
     mfcc->setInput(input->subscribe());
     manager->setAudioInput(input->subscribe());
     manager->setMFCCInput(mfcc->subscribe());
+    manager->setStringMFCCInput(mfcc->stringSubscribe());
     // start thread
     std::thread manager_thread(&Record_Manager::run,manager);
     std::thread audio_thread(&AudioInput::run, input);

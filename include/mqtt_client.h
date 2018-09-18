@@ -15,26 +15,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef MQTTH
+#ifndef MQTT_H
+#define MQTT_H
 #include <iostream>
 #include <string>
 #include "blockingqueue.h"
 #include "MQTTClient.h"
-#include "rapidjson/document.h"
-#include "rapidjson/writer.h"
-#include "rapidjson/stringbuffer.h"
-#include "rapidjson/error/en.h"
-
-using namespace rapidjson;
 using namespace std;
 
-typedef struct mqtt_message {
+struct mqtt_message {
     std::string topic;
     std::string payload;
 };
 
-extern BlockingQueue<mqtt_message>* mqtt_queue;
-extern bool new_message;
+extern BlockingQueue<mqtt_message> *mqtt_queue;
+extern int new_message;
 
 void delivered(void *context, MQTTClient_deliveryToken dt);
 int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *message);

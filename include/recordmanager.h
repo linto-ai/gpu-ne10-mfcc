@@ -15,6 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #ifndef RECORDER_H
+#define RECORDER_H
 #include <iostream>
 #include <string>
 #include <fstream>
@@ -22,8 +23,13 @@
 #include <sys/types.h>  
 #include <sys/stat.h> 
 #include <chrono>
+#include <ctime>
 #include "circular.h" 
 #include "mqtt_client.h"
+#include "rapidjson/document.h"
+#include "rapidjson/writer.h"
+#include "rapidjson/stringbuffer.h"
+#include "rapidjson/error/en.h"
 using namespace std;
 using namespace std::chrono;
 
@@ -32,22 +38,23 @@ enum event {Recording, Meeting, None};
 class Record_Manager {
     public:
     Record_Manager(string filename,bool pipe_mode,string meeting_file_name,string mfcc_file_name,int32_t buffer_size,int32_t chunkSize,int num_cep);
-    void writeData(int16_t* data,float* mfcc1,float* mfcc2,int num_cep);
+    void writeAudio(int16_t* audio);
+    void writeMeeting(int16_t* audio);
+    void writeMFCC(float* mfcc1,float* mfcc2);
+    void writeStringMFCC(string* mfcc1,string* mfcc2);
     bool sendBinaryFlow(int16_t* data,int size);
     void setAudioInput(BlockingQueue<int16_t*>* queue);
     void setMFCCInput(BlockingQueue<int16_t*>* queue);
     void setMFCCInput(BlockingQueue<float*>* queue);
+    void setStringMFCCInput(BlockingQueue<string*>* queue);
     void OpenMeetingFile();
     void switchState();
     void run();
     ~Record_Manager();
-    
-    bool recording = false;
-    bool meeting_recording = false;
-    bool mfcc_on = false;
 
     private:
-    int num_cep= 13;
+    bool recording = false,meeting_recording = false,mfcc_on = false,mfcc_string_on = false;
+    int num_cep;
     string name;
     ofstream stream;
     string meeting_file_name;
@@ -57,6 +64,7 @@ class Record_Manager {
     Circular_Buffer *buffer;
     BlockingQueue<int16_t*> *audio_queue;
     BlockingQueue<float*> *mfcc_queue;
+    BlockingQueue<string*> *string_mfcc_queue;
     int32_t chunkSize;
     mqtt_message msg;
 };

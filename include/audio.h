@@ -38,7 +38,7 @@ class AudioInput
 
     private:
     uint16_t chunk_size;
-    pa_simple *s;
+    pa_simple *s,*s_play;
     pa_sample_spec ss;
     std::vector<BlockingQueue<int16_t*>*> outPutQueues;
     

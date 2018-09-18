@@ -14,8 +14,12 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
+#ifndef MFCC_H
+#define MFCC_H
 #include <iostream>
 #include <algorithm>
+#include <string>
 #include <numeric>
 #include <complex>
 #include <vector>
@@ -26,13 +30,15 @@
 #include "blockingqueue.h"
 #include "NE10.h"
 
-typedef struct bin {
+using namespace std;
+
+struct bin {
     int index;
     int size;
     float* vector;
 };
 
-typedef enum windows_type {
+enum windows_type {
     blackman,
     povey,
     hamming,
@@ -46,15 +52,17 @@ public:
     const double pi = 4*atan(1.0);   // Pi = 3.14...
     int size,sliding_samples,rate=16000,fft_size,low_frequency=40,high_frequency=7800; //Parameters with default values
     float pre_emph_coef=0.97,*window,*lifter_coefs,cepstral_lifter_coef = 22.0,** matrix;
-    int numCep = 40,numBins = 40;
     int num_cep=13,num_bins=40;
     bin* bins;
     bool lift=true;
     enum windows_type type;
     BlockingQueue<int16_t*>* input_queue;
     BlockingQueue<float*>* output_queue; 
+    BlockingQueue<string*>* string_output_queue; 
     float *mfcc,*mel_energies,*power_spec,*fft_vector,*data_float;
     float average,energy,first_energy,last_energy;
+    bool string_conversion = false;
+    string* mfcc_string;
 
 private:
     float hz2mel (float f);
@@ -81,5 +89,6 @@ public:
     void compute(void);
     void setInput(BlockingQueue<int16_t*>* queue);
     BlockingQueue<float*>* subscribe();
-    
+    BlockingQueue<string*>* stringSubscribe();
 };
+#endif

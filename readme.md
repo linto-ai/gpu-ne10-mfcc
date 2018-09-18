@@ -15,6 +15,9 @@ make
 
 ### Parser JSON
 I use RapidJSON, because it's rapid :D . To be honest, I used the first library I found. It seems to be enough at this time.
+```
+sudo apt-get install libjsoncpp-dev
+```
 
 ### Communication
 The communication between threads is possible through BlockingQueue. You just have to set the input queue of one thread with the output queue of a second one.
@@ -38,3 +41,9 @@ Currently, all class attributes are public, so you can easily modify MFCC parame
 
 ### Pulse Audio
 This program uses pulse audio API to get audio in real-time. 
+
+### MQTT
+The mqtt librarie used here is MQTT_Paho C. It was already used in audio_recorder. Some new MQTT messages can be add in switchState() function of Record_Manager class. New topics can be add in config.json. Currently, it handles 4 topics and 4 message types.
+
+### Configuration file
+I've chosen a json file to configure this software. It was obviously because I already used rapidjson to parse mqtt messages. As Yoann suggested, it could be easier for users to have a yaml file.

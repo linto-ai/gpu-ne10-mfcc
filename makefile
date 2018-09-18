@@ -1,8 +1,8 @@
-CC = g++
-CCFLAGS= -Wall -pthread -lpulse-simple -lpulse -lNE10 -lpaho-mqtt3cs
-EXEC_NAME= audio_test
-LIBS= -L/usr/local/lib/ 
-OBJ = main.o circular.o recordmanager.o client.o audio.o mfcc.o mqtt_client.o
+CC=g++
+CCFLAGS=-Wall -pthread -lpulse-simple -lpulse -lNE10 -lpaho-mqtt3cs
+EXEC_NAME=audio_test
+LIBS=-L/usr/local/lib/ 
+OBJ=main.o circular.o recordmanager.o client.o audio.o mfcc.o mqtt_client.o config.o
 
 all: $(EXEC_NAME) clean
 
@@ -29,6 +29,9 @@ mfcc.o : src/mfcc.cpp include/mfcc.h
 
 mqtt_client.o :  src/mqtt_client.cpp include/mqtt_client.h
 	$(CC) $(CCFLAGS) -c -o mqtt_client.o src/mqtt_client.cpp
+
+config.o : src/config.cpp include/config.h
+	$(CC) $(CCFLAGS) -c -o config.o src/config.cpp
 
 clean :
 	rm -rf *.o

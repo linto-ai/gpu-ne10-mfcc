@@ -11,6 +11,7 @@ AudioInput::AudioInput(AudioParameter *params)
 
     // Open connexion
     s = pa_simple_new(NULL,"Audio", PA_STREAM_RECORD, NULL, "ASR", &ss, NULL, NULL, NULL);
+    s_play = pa_simple_new(NULL,"Audio", PA_STREAM_PLAYBACK, NULL, "ASR", &ss, NULL, NULL, NULL);
 }
 
 AudioInput::~AudioInput(){
@@ -26,11 +27,14 @@ void AudioInput::run()
     int error;
     int16_t *buffer = new int16_t[chunk_size];
     while (true) {
-        ret = pa_simple_read(s,buffer,chunk_size,&error);
+        if ((ret = pa_simple_read(s,buffer,chunk_size*sizeof(int16_t),&error)) != 0) {
+            cout << "Can't read input data" << endl;
+        }
         for (BlockingQueue<int16_t*> * queue : outPutQueues)
         {
             queue->push(buffer);
         }
+        //pa_simple_write(s_play, buffer, chunk_size*sizeof(int16_t),&error);
     }
 }
 
