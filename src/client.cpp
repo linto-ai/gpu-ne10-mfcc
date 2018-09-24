@@ -14,40 +14,41 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "../include/client.h"
-using namespace std;
 
-Client::Client(int port,string address,int queue_max_size) {
-    int sock = 0;
-    struct sockaddr_in serv_addr;
+#include "../include/client.h"
+
+using namespace std;
+using namespace boost::asio::generic;
+
+Client::Client(string port,string address,int queue_max_size): s_tcp(io_service),s(io_service) {    
     this->port = port;
     this->address = address;
-    if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-    {
-        cout << "Socket creation error" << endl;
-    }
-    memset(&serv_addr, '0', sizeof(serv_addr));
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port = htons(port);
-    if(inet_pton(AF_INET, address.c_str(), &serv_addr.sin_addr)<=0) 
-    {
-        cout << "Invalid address/ Address not supported" << endl;
-    }
-    if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
-    {
-        cout << "Connection Failed " << endl;
-    }
-    this->sock = sock;
-
-    //BlockingQueue<int16_t> queue(queue_max_size);
-    //this->queue = &queue;
+    unix_domain_socket = false;
+    boost::asio::ip::tcp::resolver resolver(io_service);
+    std::cout << "Connecting to server..." << std::endl;
+    boost::asio::connect(s_tcp, resolver.resolve({address, port}));
+    std::cout << "Connection successful to " << address <<":"<< port <<  std::endl;
 }
 
-void Client::sendData(void* buffer,int size) {
-    send(this->sock , buffer , size , 0 );
+Client::Client(string pathname): s_tcp(io_service),s(io_service) {   
+    this->pathname = pathname;
+    unix_domain_socket = true;
+    std::cout << "Connecting to server..." << std::endl;
+    boost::asio::local::stream_protocol::endpoint ep(pathname);
+    s.connect(ep);
+    std::cout << "Connection successful" << std::endl;
 }
 
-int Client::getPort() {
+void Client::sendData(const char* buffer,int size) {
+    if (unix_domain_socket == true) {
+        boost::asio::write(s, boost::asio::buffer(buffer, size));
+    }
+    else {
+        boost::asio::write(s_tcp, boost::asio::buffer(buffer, size));
+    }
+}
+
+string Client::getPort() {
     return this->port;
 }
 
@@ -56,5 +57,5 @@ string Client::getAddress() {
 }
 
 Client::~Client() {
-    close(this->sock);
+
 }

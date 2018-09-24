@@ -26,7 +26,7 @@ Audio thread can provide multiple queues. In this way, Record Manager and MFCC c
 ### MFCC computation
 MFCC computation using Kaldi pipeline for one frame.
 * Compute average value of the frame
-* Cast inputs to float
+* Cast inputs to float values
 * Remove the average value for each sample
 * Compute energy of the frame
 * Apply pre-emphasis and windowing (Povey, Hamming, Hann or Blackman)
@@ -46,4 +46,10 @@ This program uses pulse audio API to get audio in real-time.
 The mqtt librarie used here is MQTT_Paho C. It was already used in audio_recorder. Some new MQTT messages can be add in switchState() function of Record_Manager class. New topics can be add in config.json. Currently, it handles 4 topics and 4 message types.
 
 ### Configuration file
-I've chosen a json file to configure this software. It was obviously because I already used rapidjson to parse mqtt messages. As Yoann suggested, it could be easier for users to have a yaml file.
+I've chosen a json file to configure this software. It was obviously because I already used rapidjson to parse mqtt messages. As Yoann suggested, it could be easier for users to have a yaml file. You can add some parameters in config.h and config.cpp.
+
+### Unix Domain Socket
+I've chosen Boost C++ library to make this part easier to code. 
+```
+sudo apt-get install libboost-all-dev
+```

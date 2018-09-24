@@ -316,29 +316,17 @@ void MFCC::computeFrame(int16_t* data) {
 
 void MFCC::compute(void) {
     int16_t* input;
-    if (string_conversion) {
-        while(true)
-        {
-            input = input_queue->pop(); //2*size - sliding_samples
-            computeFrame(input);
-            string_output_queue->push(mfcc_string);
-            usleep(100);
-            computeFrame(input+size-sliding_samples);
-            string_output_queue->push(mfcc_string);
-        }
+    while(true)
+    {
+        input = input_queue->pop(); //2*size - sliding_samples
+        computeFrame(input);
+        output_queue->push(mfcc);
+        string_output_queue->push(mfcc_string);
+        usleep(100);
+        computeFrame(input+size-sliding_samples);
+        output_queue->push(mfcc);
+        string_output_queue->push(mfcc_string);
     }
-    else {
-        while(true)
-        {
-            input = input_queue->pop(); //2*size - sliding_samples
-            computeFrame(input);
-            output_queue->push(mfcc);
-            usleep(100);
-            computeFrame(input+size-sliding_samples);
-            output_queue->push(mfcc);
-        }
-    } 
-    
 }
 
 BlockingQueue<float*>* MFCC::subscribe(void)

@@ -26,22 +26,27 @@
 #include <netinet/in.h>
 #include <string.h>
 #include <arpa/inet.h>
+#include "boost/asio.hpp"
 using namespace std;
+using namespace boost::asio::generic;
 
 class Client {
     public:
-    Client(int port,string address,int queue_max_size);
-    int getPort();
+    Client(string port,string address,int queue_max_size);
+    Client(string pathname);
+    string getPort();
     string getAddress();
-    void sendData(void* buffer,int size);
+    void sendData(const char* buffer,int size);
     ~Client();
     
     private:
-    void _on_broker_message();
-    void _on_broker_connect();
-    int port;
+    bool unix_domain_socket = true;
+    boost::asio::io_service io_service;
+    boost::asio::local::stream_protocol::socket s;
+    boost::asio::ip::tcp::socket s_tcp;
+    string pathname;
+    string port;
     string address;
-    int sock; // TCP socket
     //BlockingQueue<int16_t> *queue;
 };
 

@@ -22,6 +22,7 @@
 #include "../include/audio.h"
 #include "../include/mfcc.h"
 #include "../include/config.h"
+#include "../include/client.h"
 using namespace std;
 
 int main(int argc, char* argv[])
@@ -34,9 +35,15 @@ int main(int argc, char* argv[])
         audioParams.sampleRate = conf.audio.sample_rate;
         audioParams.channels = conf.audio.channels;
         audioParams.chunkSize = 2*conf.mfcc.frame_size-conf.mfcc.sliding_samples; 
-    Record_Manager *manager = new Record_Manager(conf.files.file_name,conf.files.pipe_mode,conf.files.meeting_file,conf.files.mfcc_file,conf.files.mfcc_string_file,conf.files.circular_buffer_size,audioParams.chunkSize,conf.mfcc.num_cep);
-    AudioInput* input = new AudioInput(&audioParams);
-    MQTT_Client *mqtt = new MQTT_Client(conf.mqtt.mqtt_addr,conf.mqtt.mqtt_port,conf.mqtt.mqtt_qos,conf.mqtt.topics,conf.mqtt.topics_number);
+    Record_Manager *manager = new Record_Manager(conf.files.file_name,conf.files.pipe_mode,
+                                                conf.files.meeting_file,conf.files.mfcc_file,conf.files.mfcc_string_file,
+                                                conf.files.circular_buffer_size,audioParams.chunkSize,conf.mfcc.num_cep);
+    AudioInput *input = new AudioInput(&audioParams);
+    MQTT_Client *mqtt = new MQTT_Client(conf.mqtt.mqtt_addr,conf.mqtt.mqtt_port,conf.mqtt.mqtt_qos,
+                                        conf.mqtt.topics,conf.mqtt.topics_number);
+    Client *client = new Client("1337","localhost",10);
+    string request = "Hello all !";
+    client->sendData(request.c_str(),12);
     // Link modules
     mfcc->setInput(input->subscribe());
     manager->setAudioInput(input->subscribe());
