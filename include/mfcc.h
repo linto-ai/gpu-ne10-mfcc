@@ -58,10 +58,8 @@ public:
     enum windows_type type;
     BlockingQueue<int16_t*>* input_queue;
     BlockingQueue<float*>* output_queue; 
-    BlockingQueue<string*>* string_output_queue; 
     float *mfcc,*mel_energies,*power_spec,*fft_vector,*data_float;
     float average,energy,first_energy,last_energy;
-    bool string_conversion = false;
     string* mfcc_string;
 
 private:
@@ -89,6 +87,5 @@ public:
     void compute(void);
     void setInput(BlockingQueue<int16_t*>* queue);
     BlockingQueue<float*>* subscribe();
-    BlockingQueue<string*>* stringSubscribe();
 };
 #endif

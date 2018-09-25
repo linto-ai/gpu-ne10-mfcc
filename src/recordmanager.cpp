@@ -42,10 +42,6 @@ void Record_Manager::setMFCCInput(BlockingQueue<float*>* queue) {
     mfcc_queue=queue;
 }
 
-void Record_Manager::setStringMFCCInput(BlockingQueue<string*>* queue) {
-    string_mfcc_queue=queue;
-}
-
 void Record_Manager::writeAudio(int16_t* audio) {
     if (!(stream.is_open())){
        cout << "File has been closed !" << endl;
@@ -69,14 +65,6 @@ void Record_Manager::writeMFCC(float* mfcc1,float* mfcc2) {
     }
     mfcc_stream.write((char*)mfcc1, sizeof(float)*num_cep);
     mfcc_stream.write((char*)mfcc2, sizeof(float)*num_cep);
-}
-
-void Record_Manager::writeStringMFCC(string* mfcc1,string* mfcc2) {
-    if (!(mfcc_string_stream.is_open())) {
-        cout << "MFCC File has been closed !" << endl;
-    }
-    mfcc_string_stream.write((char*)mfcc1, sizeof(float)*num_cep);
-    mfcc_string_stream.write((char*)mfcc2, sizeof(float)*num_cep);
 }
 
 
@@ -148,12 +136,6 @@ void Record_Manager::run() {
             mfcc_input_2 = mfcc_queue->pop();
             writeMFCC(mfcc_input_1,mfcc_input_2);
         }
-        if (mfcc_string_on) {
-            cout << "I'm in !" << endl;
-            mfcc_string_1 = string_mfcc_queue->pop();
-            mfcc_string_2 = string_mfcc_queue->pop();
-            writeStringMFCC(mfcc_string_1,mfcc_string_2);
-        } 
    }
 }
 

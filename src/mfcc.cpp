@@ -45,8 +45,6 @@ MFCC::MFCC(int size,int sliding_samples, enum windows_type type) {
     data_float = new float[size]();
     lifter_coefs = new float[num_cep]();
     output_queue = new BlockingQueue<float*>(20);
-    string_output_queue = new BlockingQueue<string*>(20);
-    mfcc_string = new string[num_cep];
     initMelFilterBank();
     initDCTMatrix();
 }
@@ -161,7 +159,6 @@ void MFCC::initDCTMatrix(void) {
 // Compute the DCT using matrix and vector multiplication
 void MFCC::computeDCT(float* vec) {
     //TODO Use NE10 matrix / vector and relatives functions
-    //float* mfcc = (float*)malloc(sizeof(float)*num_cep);
     for (int i=0 ;i<num_cep;i++) {
         mfcc[i] = 0;
         for (int j=0;j<num_bins;j++) {
@@ -169,7 +166,6 @@ void MFCC::computeDCT(float* vec) {
         }
         mfcc[i] *= lifter_coefs[i];
     }
-    //return mfcc;
 }
 
 // FFT using NE10 library
@@ -191,7 +187,6 @@ void MFCC::fft(float* frame) {
     NE10_FREE(fft_out);                    // Free the allocated output array
     NE10_FREE(fft_in);                     // Free the allocated input array
     ne10_fft_destroy_r2c_float32(cfg); // Free the allocated configuration structure
-    //return out;
 }
 
 // IFFT using NE10 library
@@ -260,13 +255,11 @@ void MFCC::initMelFilterBank(void) {
 
 
 void MFCC::computeMelFilterBank(float* powerSpect) {
-    //float* mel_energies = (float*)malloc(sizeof(float)*num_bins);
     for (int i=0;i<num_bins;i++) {
         int offset = bins[i].index;
         float* vec = bins[i].vector;
         mel_energies[i] = log(vecMul(vec,powerSpect+offset,bins[i].size));
     }
-    //return mel_energies;
 }
 
 
@@ -278,9 +271,6 @@ float MFCC::vecMul(float* vec1, float* vec2,int size) {
     }
     return output;
 }
-
-
-
 
 void MFCC::computeFrame(int16_t* data) {
     for (int i=0;i<size;i++) {
@@ -306,12 +296,7 @@ void MFCC::computeFrame(int16_t* data) {
     power_spec[fft_size/2-1] = last_energy;
     computeMelFilterBank(power_spec); // Multiplication with MelFilterBank matrix
     computeDCT(mel_energies); // Compute DCT
-    mfcc[0] = energy;
-    if (string_conversion) {
-        for (int i=0;i<num_cep;i++) {
-           mfcc_string[i] = to_string(mfcc[i]);
-        }
-    }  
+    mfcc[0] = energy; 
 }
 
 void MFCC::compute(void) {
@@ -321,11 +306,9 @@ void MFCC::compute(void) {
         input = input_queue->pop(); //2*size - sliding_samples
         computeFrame(input);
         output_queue->push(mfcc);
-        string_output_queue->push(mfcc_string);
         usleep(100);
         computeFrame(input+size-sliding_samples);
         output_queue->push(mfcc);
-        string_output_queue->push(mfcc_string);
     }
 }
 
@@ -334,15 +317,8 @@ BlockingQueue<float*>* MFCC::subscribe(void)
    return output_queue;
 }
 
-BlockingQueue<string*>* MFCC::stringSubscribe(void)
-{
-   return string_output_queue;
-}
 
 
-
-
-// 
 
 
 

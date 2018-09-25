@@ -48,6 +48,15 @@ void Client::sendData(const char* buffer,int size) {
     }
 }
 
+void Client::receiveData(char* msg,int size) {
+    if (unix_domain_socket == true) {
+        boost::asio::read(s, boost::asio::buffer(msg,size));
+    }
+    else {
+        boost::asio::read(s_tcp, boost::asio::buffer(msg,size));
+    }
+}
+
 string Client::getPort() {
     return this->port;
 }

@@ -27,6 +27,7 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include "boost/asio.hpp"
+#include "blockingqueue.h"
 using namespace std;
 using namespace boost::asio::generic;
 
@@ -37,6 +38,7 @@ class Client {
     string getPort();
     string getAddress();
     void sendData(const char* buffer,int size);
+    void receiveData(char* msg,int size);
     ~Client();
     
     private:
@@ -47,7 +49,7 @@ class Client {
     string pathname;
     string port;
     string address;
-    //BlockingQueue<int16_t> *queue;
+    BlockingQueue<int16_t> *input_queue;
 };
 
 #endif

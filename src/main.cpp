@@ -42,13 +42,10 @@ int main(int argc, char* argv[])
     MQTT_Client *mqtt = new MQTT_Client(conf.mqtt.mqtt_addr,conf.mqtt.mqtt_port,conf.mqtt.mqtt_qos,
                                         conf.mqtt.topics,conf.mqtt.topics_number);
     Client *client = new Client("1337","localhost",10);
-    string request = "Hello all !";
-    client->sendData(request.c_str(),12);
     // Link modules
     mfcc->setInput(input->subscribe());
     manager->setAudioInput(input->subscribe());
     manager->setMFCCInput(mfcc->subscribe());
-    manager->setStringMFCCInput(mfcc->stringSubscribe());
     // start thread
     std::thread manager_thread(&Record_Manager::run,manager);
     std::thread audio_thread(&AudioInput::run, input);

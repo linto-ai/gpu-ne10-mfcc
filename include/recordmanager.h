@@ -46,13 +46,12 @@ class Record_Manager {
     void setAudioInput(BlockingQueue<int16_t*>* queue);
     void setMFCCInput(BlockingQueue<int16_t*>* queue);
     void setMFCCInput(BlockingQueue<float*>* queue);
-    void setStringMFCCInput(BlockingQueue<string*>* queue);
     void OpenMeetingFile();
     void switchState();
     void run();
     ~Record_Manager();
 
-    bool recording = false,meeting_recording = false,mfcc_on = false,mfcc_string_on = false;
+    bool recording = false,meeting_recording = false,mfcc_on = false;
 
     private:
     int num_cep;
@@ -67,7 +66,6 @@ class Record_Manager {
     Circular_Buffer *buffer;
     BlockingQueue<int16_t*> *audio_queue;
     BlockingQueue<float*> *mfcc_queue;
-    BlockingQueue<string*> *string_mfcc_queue;
     int32_t chunkSize;
     mqtt_message msg;
 };
