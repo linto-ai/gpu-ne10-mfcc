@@ -33,7 +33,7 @@ using namespace boost::asio::generic;
 
 class Client {
     public:
-    Client(string port,string address,int queue_max_size);
+    Client(string port,string address);
     Client(string pathname);
     string getPort();
     string getAddress();

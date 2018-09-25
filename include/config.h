@@ -54,7 +54,6 @@ struct files_config {
     bool pipe_mode;
     string meeting_file;
     string mfcc_file;
-    string mfcc_string_file;
     int circular_buffer_size;
 };
 

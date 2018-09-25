@@ -20,7 +20,12 @@
 using namespace std;
 using namespace boost::asio::generic;
 
-Client::Client(string port,string address,int queue_max_size): s_tcp(io_service),s(io_service) {    
+/**
+ * Init client class
+ * Param: Port string of server
+ * Param: Address string of server
+ */
+Client::Client(string port,string address): s_tcp(io_service),s(io_service) {    
     this->port = port;
     this->address = address;
     unix_domain_socket = false;
@@ -30,6 +35,10 @@ Client::Client(string port,string address,int queue_max_size): s_tcp(io_service)
     std::cout << "Connection successful to " << address <<":"<< port <<  std::endl;
 }
 
+/**
+ * Init client class
+ * Param: Pathname to socket.sock
+ */
 Client::Client(string pathname): s_tcp(io_service),s(io_service) {   
     this->pathname = pathname;
     unix_domain_socket = true;
@@ -39,6 +48,11 @@ Client::Client(string pathname): s_tcp(io_service),s(io_service) {
     std::cout << "Connection successful" << std::endl;
 }
 
+/**
+ * Function to send data through socket
+ * Param: buffer to send
+ * Param: size of buffer
+ */
 void Client::sendData(const char* buffer,int size) {
     if (unix_domain_socket == true) {
         boost::asio::write(s, boost::asio::buffer(buffer, size));
@@ -48,6 +62,11 @@ void Client::sendData(const char* buffer,int size) {
     }
 }
 
+/**
+ * Receives data through socket
+ * Param: Buffer to save data
+ * Param: Size of data to read
+ */
 void Client::receiveData(char* msg,int size) {
     if (unix_domain_socket == true) {
         boost::asio::read(s, boost::asio::buffer(msg,size));

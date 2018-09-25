@@ -16,13 +16,22 @@
  */
 #include "../include/circular.h"
 
+
+/**
+ * Init Circular_buffer class
+ * Param: size of circular buffer
+ */
 Circular_Buffer::Circular_Buffer(uint32_t size) {
     circular_size = size;
     index = 0;
     buffer = (int16_t*)malloc(sizeof(int16_t)*size);
 }
 
-
+/**
+ * Add some data to buffer
+ * Param: Buffer of audio frames
+ * Param: Size of buffer
+ */
 bool Circular_Buffer::add(int16_t* data, uint32_t size) {
   if (circular_size >= size && size != 0) { // Useless case if bufsize > max_buf_size
    if (size + index >= circular_size) { //If there is not enough places at the end of the buffer
@@ -38,6 +47,7 @@ bool Circular_Buffer::add(int16_t* data, uint32_t size) {
  }
  return false;
 }
+
 
 int16_t* Circular_Buffer::getBuffer() {
     return buffer;

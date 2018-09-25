@@ -18,7 +18,12 @@
 
 using namespace std;
 
-
+/**
+* Init MFCC class
+* Param: size of samples window
+* Param: number of samples for sliding window
+* Param: type of window, Povey, Hamming, Hann, Blackman
+*/
 MFCC::MFCC(int size,int sliding_samples, enum windows_type type) {
     this->size = size;
     this->sliding_samples=sliding_samples;
@@ -49,50 +54,71 @@ MFCC::MFCC(int size,int sliding_samples, enum windows_type type) {
     initDCTMatrix();
 }
 
+/**
+* Define input queue for audio data
+* Param: audio queue from Pulse Audio
+*/
 void MFCC::setInput(BlockingQueue<int16_t*>* queue){
     input_queue = queue;
 }
 
-// Hertz to Mel conversion
+/**
+* Return the conversion of hertz scale to mel scale
+* Param: Frequency in hertz
+*/
 float MFCC::hz2mel (float f) {
     return 1127.0*std::log(1+f/700);
 }
 
-// Mel to Hertz conversion
+/**
+* Return the conversion of mel scale to hertz scale
+* Param: Frequency in mel
+*/
 float MFCC::mel2hz (float m) {
     return 700*(std::pow(10,m/2595)-1);
 }
 
 
-//Initialize the Hann window 
+/**
+* Initialize the Hann window
+*/
 void MFCC::initHann(void) {
     for (int i=0;i<size;i++) {
         window[i] = 0.54-0.46*cos(2*pi*i/(size));
     }
 }
 
-//Initialize the Blackman window
+/**
+* Initialize the Blackman window
+*/
 void MFCC::initBlackman(void) {
     for (int i=0;i<size;i++) {
         window[i] = 0.42 - 0.5*cos(2*pi*i/size) +0.08*cos(4*pi*i/size);
     }
 }
 
-//Initialize the Povey window
+/**
+* Initialize the Povey window
+*/
 void MFCC::initPovey(void) {
     for (int i=0;i<size;i++) {
         window[i] = pow(0.5-0.5*cos(2*pi*i/(size-1)),0.85);
     }
 }
 
-//Initialize the Hamming window
+/**
+* Initialize the Hamming window
+*/
 void MFCC::initHamming(void) {
     for (int i=0;i<size;i++) {
         window[i] = 0.54-0.46*cos(2*pi*i/(size));
     }
 }
 
-// Compute the average in float format of a specific frame
+/**
+ * Compute the average float value of a specific frame
+ * Param: Frame with "size" samples
+ */
 float MFCC::computeAverage(int16_t* frame) {
     float value = 0;
     for (int i=0;i<size;i++) {
@@ -101,7 +127,11 @@ float MFCC::computeAverage(int16_t* frame) {
     return value/size;
 }
 
-// Return the frame less average value for every sample
+/**
+ * Return the frame less average value for every sample
+ * Param: Frame with "size" samples
+ * Param: Average value of the frame
+ */
 void MFCC::lessAverage(float* new_frame, float value) {
     for (int i=0;i<size;i++) {
         new_frame[i]-=-value;
@@ -109,7 +139,10 @@ void MFCC::lessAverage(float* new_frame, float value) {
 }
 
 
-// Compute the energy of the frame
+/**
+ * Compute the energy of the frame
+ * Param: Frame with "size" samples
+ */
 float MFCC::computeEnergy(float* frame)
 {
     float sum = 0;
@@ -120,7 +153,10 @@ float MFCC::computeEnergy(float* frame)
     return std::log(sum);
 }
 
-// Pre-emphasis and window
+/**
+ * Compute the pre-emphasis and window computation
+ * Param: Frame with "size" samples
+ */
 void MFCC::preEmph(float* frame) {
     float* frame_save = new float[size];
     for (int i = 0;i<size;i++) {
@@ -133,7 +169,9 @@ void MFCC::preEmph(float* frame) {
     free(frame_save);
 }
 
-// Initialize coefs of Matrix for DCT computation and lifter vector
+/**
+ * Initialize coefs of Matrix for DCT computation and lifter vector
+ */
 void MFCC::initDCTMatrix(void) {
     //TODO Use NE10 matrix
     matrix = new float*[num_cep];
@@ -156,7 +194,10 @@ void MFCC::initDCTMatrix(void) {
     }
 }
 
-// Compute the DCT using matrix and vector multiplication
+/**
+ * Compute the DCT using matrix and vector multiplication
+ * Param: Frame with "fft_size" samples
+ */
 void MFCC::computeDCT(float* vec) {
     //TODO Use NE10 matrix / vector and relatives functions
     for (int i=0 ;i<num_cep;i++) {
@@ -167,8 +208,10 @@ void MFCC::computeDCT(float* vec) {
         mfcc[i] *= lifter_coefs[i];
     }
 }
-
-// FFT using NE10 library
+/**
+ * Compute the FFT using NE10 library
+ * Param: Frame with "size" samples
+ */
 void MFCC::fft(float* frame) {
     ne10_int32_t ne_size = fft_size;
     ne10_fft_r2c_cfg_float32_t cfg = ne10_fft_alloc_r2c_float32(ne_size);      // Allocate a configuration structure for R2C/C2R FP32 NEON FFTs of size fft_size
@@ -189,7 +232,10 @@ void MFCC::fft(float* frame) {
     ne10_fft_destroy_r2c_float32(cfg); // Free the allocated configuration structure
 }
 
-// IFFT using NE10 library
+/**
+ * Compute the IFFT using NE10 library
+ * Param: Frame with "fft_size" samples
+ */
 float* MFCC::ifft(float* frame) {
     ne10_int32_t ne_size = this->fft_size;
     ne10_fft_r2c_cfg_float32_t cfg = ne10_fft_alloc_r2c_float32(ne_size);      // Allocate a configuration structure for R2C/C2R FP32 NEON FFTs of size fft_size
@@ -210,7 +256,9 @@ float* MFCC::ifft(float* frame) {
     return out;
 }
 
-
+/**
+ * Initialize the mel filter bank matrix
+ */
 void MFCC::initMelFilterBank(void) {
     bins = (bin*)malloc(sizeof(bin)*num_bins);
     float* output = (float*)malloc(sizeof(float)*2*num_bins);
@@ -253,7 +301,10 @@ void MFCC::initMelFilterBank(void) {
     free(this_bin);
 }
 
-
+/**
+ * Compute the mel filter bank 
+ * Param: Frame with "fft_size" samples
+ */
 void MFCC::computeMelFilterBank(float* powerSpect) {
     for (int i=0;i<num_bins;i++) {
         int offset = bins[i].index;
@@ -263,7 +314,12 @@ void MFCC::computeMelFilterBank(float* powerSpect) {
 }
 
 
-
+/**
+ * Compute the multiplication of 2 vectors
+ * Param: First vector
+ * Param: Second vector
+ * Size of vector
+ */
 float MFCC::vecMul(float* vec1, float* vec2,int size) {
     float output = 0;
     for (int i=0;i<size;i++) {
@@ -272,6 +328,10 @@ float MFCC::vecMul(float* vec1, float* vec2,int size) {
     return output;
 }
 
+/**
+ * Compute the MFCC for one frame
+ * Param: Frame with "size" samples
+ */
 void MFCC::computeFrame(int16_t* data) {
     for (int i=0;i<size;i++) {
         data_float[i] = (float)data[i];
@@ -299,6 +359,10 @@ void MFCC::computeFrame(int16_t* data) {
     mfcc[0] = energy; 
 }
 
+/**
+ * Compute the MFCC for all frames
+ * Param: Frame with "size" samples
+ */
 void MFCC::compute(void) {
     int16_t* input;
     while(true)
@@ -312,6 +376,9 @@ void MFCC::compute(void) {
     }
 }
 
+/**
+ * Returns the MFCC queue
+ */
 BlockingQueue<float*>* MFCC::subscribe(void)
 {
    return output_queue;

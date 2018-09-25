@@ -30,6 +30,7 @@
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/error/en.h"
+#include "client.h"
 using namespace std;
 using namespace std::chrono;
 
@@ -37,8 +38,10 @@ enum event {Recording, Meeting, None};
 
 class Record_Manager {
     public:
-    Record_Manager(string filename,bool pipe_mode,string meeting_file_name,string mfcc_file_name,string mfcc_string_name,int32_t buffer_size,int32_t chunkSize,int num_cep);
-    void writeAudio(int16_t* audio);
+    Record_Manager(string filename,bool pipe_mode,string meeting_file_name,string mfcc_file_name,int32_t buffer_size,int32_t chunk_size,int num_cep);
+    void initClient(string ip,string port);
+    void initClient(string pathname);
+    void writeAudio(int16_t* audio, int size);
     void writeMeeting(int16_t* audio);
     void writeMFCC(float* mfcc1,float* mfcc2);
     void writeStringMFCC(string* mfcc1,string* mfcc2);
@@ -54,11 +57,10 @@ class Record_Manager {
     bool recording = false,meeting_recording = false,mfcc_on = false;
 
     private:
+    Client* client;
     int num_cep;
     string name;
-    string mfcc_string_file_name;
     ofstream stream;
-    ofstream mfcc_string_stream;
     string meeting_file_name;
     ofstream meeting_stream;
     string mfcc_file_name;
@@ -66,7 +68,7 @@ class Record_Manager {
     Circular_Buffer *buffer;
     BlockingQueue<int16_t*> *audio_queue;
     BlockingQueue<float*> *mfcc_queue;
-    int32_t chunkSize;
+    uint16_t chunk_size;
     mqtt_message msg;
 };
 
