@@ -23,6 +23,7 @@
 #include "../include/mfcc.h"
 #include "../include/config.h"
 #include "../include/client.h"
+#include "../src/server.cpp"
 using namespace std;
 
 int main(int argc, char* argv[])
@@ -30,7 +31,6 @@ int main(int argc, char* argv[])
     //TODO Add config file
     config conf;
     parseConfigFile("config.json",&conf);
-    cout << "Hé" << endl;
     MFCC *mfcc = new MFCC(conf.mfcc.frame_size,conf.mfcc.sliding_samples,conf.mfcc.window); // MFCC window size and sliding part
     AudioParameter audioParams;
         audioParams.sampleRate = conf.audio.sample_rate;
@@ -43,6 +43,9 @@ int main(int argc, char* argv[])
     AudioInput *input = new AudioInput(&audioParams);
     MQTT_Client *mqtt = new MQTT_Client(conf.mqtt.mqtt_addr,conf.mqtt.mqtt_port,conf.mqtt.mqtt_qos,
                                         conf.mqtt.topics,conf.mqtt.topics_number);
+    boost::asio::io_service io_service;
+    std::remove("/tmp/socket");
+    Server s(io_service, "/tmp/socket");
     // Link modules
     mfcc->setInput(input->subscribe());
     manager->setAudioInput(input->subscribe());
@@ -52,6 +55,7 @@ int main(int argc, char* argv[])
     std::thread audio_thread(&AudioInput::run, input);
     std::thread mfcc_thread(&MFCC::compute, mfcc);
     cout << "All thread started" << endl;
+    io_service.run();
     mfcc_thread.join();
     manager_thread.join();
     audio_thread.join();

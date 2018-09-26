@@ -53,3 +53,4 @@ I've chosen Boost C++ library to make this part easier to code.
 ```
 sudo apt-get install libboost-all-dev
 ```
+That's one of the most used open-source C++ library. It's easy to use for network part like tcp socket or unix domain socket. You'll need boost_system and boost_asio libs (-lboost_iostreams -lboost_system).

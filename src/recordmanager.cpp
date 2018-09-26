@@ -177,7 +177,6 @@ void Record_Manager::switchState() {
 void Record_Manager::run() {
     int16_t* audio_input;
     float *mfcc_input_1,*mfcc_input_2;
-    string *mfcc_string_1,*mfcc_string_2;
     while(true) {
         switchState();
         audio_input = audio_queue->pop();
