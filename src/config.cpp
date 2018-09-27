@@ -49,6 +49,7 @@ void parseConfigFile(string pathname,config *conf) {
     conf->files.meeting_file = (d["files"]["meeting_file"]).GetString();
     conf->files.mfcc_file = (d["files"]["mfcc_file"]).GetString();
     conf->files.circular_buffer_size = (d["files"]["circular_buffer_size"]).GetInt();
+    conf->files.server_pathname = (d["files"]["unix_domain_socket"]).GetString();
     conf->mfcc.frame_size = (d["mfcc"]["frame_size"]).GetInt();
     conf->mfcc.sliding_samples = (d["mfcc"]["sliding_samples"]).GetInt();  
     conf->mfcc.num_cep = (d["mfcc"]["num_cep"]).GetInt();  

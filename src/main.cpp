@@ -23,7 +23,7 @@
 #include "../include/mfcc.h"
 #include "../include/config.h"
 #include "../include/client.h"
-#include "../src/server.cpp"
+#include "../include/unix_server.h"
 using namespace std;
 
 int main(int argc, char* argv[])
@@ -35,17 +35,17 @@ int main(int argc, char* argv[])
     AudioParameter audioParams;
         audioParams.sampleRate = conf.audio.sample_rate;
         audioParams.channels = conf.audio.channels;
-        audioParams.chunkSize = 2*conf.mfcc.frame_size-conf.mfcc.sliding_samples; 
+        audioParams.chunkSize = 2*conf.mfcc.frame_size-conf.mfcc.sliding_samples;
+    boost::asio::io_service io_service; 
+    std::remove("/tmp/socket");
     Record_Manager *manager = new Record_Manager(conf.files.file_name,conf.files.pipe_mode,
                                                 conf.files.meeting_file,conf.files.mfcc_file,
                                                 conf.files.circular_buffer_size,audioParams.chunkSize,
-                                                conf.mfcc.num_cep);
+                                                conf.mfcc.num_cep,conf.files.server_pathname,
+                                                io_service);
     AudioInput *input = new AudioInput(&audioParams);
     MQTT_Client *mqtt = new MQTT_Client(conf.mqtt.mqtt_addr,conf.mqtt.mqtt_port,conf.mqtt.mqtt_qos,
                                         conf.mqtt.topics,conf.mqtt.topics_number);
-    boost::asio::io_service io_service;
-    std::remove("/tmp/socket");
-    Server s(io_service, "/tmp/socket");
     // Link modules
     mfcc->setInput(input->subscribe());
     manager->setAudioInput(input->subscribe());
@@ -54,7 +54,7 @@ int main(int argc, char* argv[])
     std::thread manager_thread(&Record_Manager::run,manager);
     std::thread audio_thread(&AudioInput::run, input);
     std::thread mfcc_thread(&MFCC::compute, mfcc);
-    cout << "All thread started" << endl;
+    cout << "All threads started" << endl;
     io_service.run();
     mfcc_thread.join();
     manager_thread.join();

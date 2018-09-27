@@ -1,8 +1,8 @@
 CC=g++
-CCFLAGS=-Wall -pthread -lpulse-simple -lpulse -lNE10 -lpaho-mqtt3cs -lboost_iostreams -lboost_system
+CCFLAGS=-Wall -pthread -lpulse-simple -lpulse -lNE10 -lpaho-mqtt3cs -lboost_thread -lboost_system
 EXEC_NAME=audio_test
 LIBS=-L/usr/local/lib/ -L/usr/lib/arm-linux-gnueabihf/
-OBJ=main.o circular.o recordmanager.o client.o audio.o mfcc.o mqtt_client.o config.o server.o
+OBJ=main.o circular.o recordmanager.o client.o audio.o mfcc.o mqtt_client.o config.o unix_server.o
 
 all: $(EXEC_NAME) clean
 
@@ -33,11 +33,8 @@ mqtt_client.o :  src/mqtt_client.cpp include/mqtt_client.h
 config.o : src/config.cpp include/config.h
 	$(CC) $(CCFLAGS) -c -o config.o src/config.cpp
 
-unix_server.o : src/unix_server.cpp include/unix_server.h
+unix_server.o : src/unix_server.cpp 
 	$(CC) $(CCFLAGS) -c -o unix_server.o src/unix_server.cpp
-
-server.o : src/server.cpp 
-	$(CC) $(CCFLAGS) -c -o server.o src/server.cpp
 
 clean :
 	rm -rf *.o

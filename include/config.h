@@ -55,6 +55,7 @@ struct files_config {
     string meeting_file;
     string mfcc_file;
     int circular_buffer_size;
+    string server_pathname;
 };
 
 struct config {

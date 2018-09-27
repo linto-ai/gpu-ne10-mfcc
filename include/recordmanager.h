@@ -30,6 +30,7 @@
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/error/en.h"
+#include "unix_server.h"
 #include "client.h"
 using namespace std;
 using namespace std::chrono;
@@ -38,7 +39,7 @@ enum event {Recording, Meeting, None};
 
 class Record_Manager {
     public:
-    Record_Manager(string filename,bool pipe_mode,string meeting_file_name,string mfcc_file_name,int32_t buffer_size,int32_t chunk_size,int num_cep);
+    Record_Manager(string filename,bool pipe_mode,string meeting_file_name,string mfcc_file_name,int32_t buffer_size,int32_t chunk_size,int num_cep,string server_pathname,boost::asio::io_service& io_service);
     void initClient(string ip,string port);
     void initClient(string pathname);
     void writeAudio(int16_t* audio, int size);
@@ -58,8 +59,10 @@ class Record_Manager {
 
     private:
     Client* client;
+    server* unix_server;
     int num_cep;
     string name;
+    string server_pathname;
     ofstream stream;
     string meeting_file_name;
     ofstream meeting_stream;

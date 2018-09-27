@@ -31,7 +31,7 @@ using namespace rapidjson;
 * Param: Size of chunk for audio data
 * Param: Number of cepstral coefficients for MFCC (40 or 13)
 */
-Record_Manager::Record_Manager(string filename,bool pipe_mode,string meeting_file_name,string mfcc_file_name,int32_t buffer_size,int32_t chunk_size,int num_cep=13) {
+Record_Manager::Record_Manager(string filename,bool pipe_mode,string meeting_file_name,string mfcc_file_name,int32_t buffer_size,int32_t chunk_size,int num_cep,string server_pathname,boost::asio::io_service& io_service) {
     if (pipe_mode) {
         mkfifo(name.c_str(), S_IWUSR | S_IRUSR | S_IRGRP | S_IROTH);
     }
@@ -40,7 +40,10 @@ Record_Manager::Record_Manager(string filename,bool pipe_mode,string meeting_fil
     this->mfcc_file_name = mfcc_file_name;
     mfcc_stream.open (mfcc_file_name, ios::out | ios::binary);
     this->meeting_file_name = meeting_file_name;
-    this->buffer = new Circular_Buffer(buffer_size);    
+    this->buffer = new Circular_Buffer(buffer_size);  
+    this->server_pathname = server_pathname;
+    unix_server = new server(io_service,server_pathname); 
+    unix_server->set_num_cep(num_cep); 
 }
 
 /**
@@ -106,7 +109,7 @@ void Record_Manager::writeMeeting(int16_t* audio) {
 * Write data to audio stream
 * Param: Audio buffer
 * Param: Data size
-*/
+*/ 
 void Record_Manager::writeMFCC(float* mfcc1,float* mfcc2) {
     if (!(mfcc_stream.is_open())) {
         cout << "MFCC File has been closed !" << endl;
@@ -176,7 +179,6 @@ void Record_Manager::switchState() {
 */
 void Record_Manager::run() {
     int16_t* audio_input;
-    float *mfcc_input_1,*mfcc_input_2;
     while(true) {
         switchState();
         audio_input = audio_queue->pop();
@@ -187,10 +189,10 @@ void Record_Manager::run() {
         if (meeting_recording) {
             writeMeeting(audio_input);
         }
-        if (mfcc_on) {
-            mfcc_input_1 = mfcc_queue->pop();
-            mfcc_input_2 = mfcc_queue->pop();
-            writeMFCC(mfcc_input_1,mfcc_input_2);
+        if (mfcc_on) { 
+            unix_server->mfcc_input_1 = mfcc_queue->pop();
+            unix_server->mfcc_input_2 = mfcc_queue->pop();
+            writeMFCC(unix_server->mfcc_input_1,unix_server->mfcc_input_2);
         }
    }
 }
