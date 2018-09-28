@@ -43,7 +43,6 @@ Record_Manager::Record_Manager(string filename,bool pipe_mode,string meeting_fil
     this->buffer = new Circular_Buffer(buffer_size);  
     this->server_pathname = server_pathname;
     unix_server = new server(io_service,server_pathname); 
-    unix_server->set_num_cep(num_cep); 
 }
 
 /**
@@ -179,6 +178,7 @@ void Record_Manager::switchState() {
 */
 void Record_Manager::run() {
     int16_t* audio_input;
+    float *mfcc_input_1,*mfcc_input_2;
     while(true) {
         switchState();
         audio_input = audio_queue->pop();
@@ -190,9 +190,9 @@ void Record_Manager::run() {
             writeMeeting(audio_input);
         }
         if (mfcc_on) { 
-            unix_server->mfcc_input_1 = mfcc_queue->pop();
-            unix_server->mfcc_input_2 = mfcc_queue->pop();
-            writeMFCC(unix_server->mfcc_input_1,unix_server->mfcc_input_2);
+            mfcc_input_1 = mfcc_queue->pop();
+            mfcc_input_2 = mfcc_queue->pop();
+            writeMFCC(mfcc_input_1,mfcc_input_2);
         }
    }
 }

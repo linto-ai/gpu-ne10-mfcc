@@ -27,12 +27,9 @@ using boost::asio::placeholders::bytes_transferred;
 
 session::session(io_service& io_service): socket_(io_service)
 {
-    for (int i=0;i<num_cep;i++){
-        //mfcc_input_1[i] = (char)i;
-        //mfcc_input_1[i]= (char)i;
-    }
+
 }
- 
+
 stream_protocol::socket & session::socket()
 {
 	return socket_;
@@ -41,8 +38,6 @@ stream_protocol::socket & session::socket()
 void session::start()
 {
     socket_.async_read_some(buffer(data_),bind(&session::handle_read,shared_from_this(),error,bytes_transferred));
-    async_write(socket_,buffer(mfcc_input_1, num_cep*sizeof(char)),bind(&session::handle_write,shared_from_this(),error));
-    async_write(socket_,buffer(mfcc_input_2, num_cep*sizeof(char)),bind(&session::handle_write,shared_from_this(),error));
 }
 
 void session::handle_read(const error_code & error,size_t bytes_transferred)
@@ -61,10 +56,6 @@ void session::handle_write(const error_code & error)
     }
 }
 
-void session::set_num_cep(int v) {
-    this->num_cep = v;
-}
-
 server::server(boost::asio::io_service& io_service, const std::string & file)
     :io_service_(io_service),acceptor_(io_service, stream_protocol::endpoint(file))
 {
@@ -72,18 +63,10 @@ server::server(boost::asio::io_service& io_service, const std::string & file)
     acceptor_.async_accept(new_session->socket(),bind(&server::handle_accept, this, new_session,error));
 }
 
-void server::set_num_cep(int v) {
-    this->num_cep = v;
-    mfcc_input_1 = new float[v];
-    mfcc_input_2 = new float[v];
-}
-
 void server::handle_accept(session_ptr new_session,const error_code & error)
 {
     if (!error)
     {
-      new_session->set_num_cep(num_cep);
-      sessions.push_back(new_session);  
       new_session->start();
     }
     new_session.reset(new session(io_service_));
