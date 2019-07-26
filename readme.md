@@ -5,6 +5,8 @@ The Ne10 library is a mathematical library (Convolution, transforms, matrices, v
 Doc Ne10 : <http://projectne10.github.io/Ne10/doc/modules.html>
 Building Ne10 : <https://github.com/projectNe10/Ne10/blob/master/doc/building.md#building-ne10>
 
+More on this on Medium : Computing mfcc voice recognition features on ARM system <https://medium.com/linagoralabs/computing-mfccs-voice-recognition-features-on-arm-systems-dae45f016eb6>
+
 ```
 git clone https://github.com/projectNe10/Ne10
 cd Ne10
